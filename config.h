@@ -21,7 +21,7 @@ struct structType {
 };
 const structType typeData[aTYPES] = {
   {false,"", "",false, "",1,0},
-  {true,"Battery (MODBUS)", "batmodbus",false, "",1,0},
+  {false,"Battery (MODBUS)", "batmodbus",false, "",1,0},
   {true,"Button", "button",false, "GPIO",1,2},
   {true,"Contact", "contact",false, "GPIO",1,4},
   {true,"Doorbell", "doorbell",false, "GPIO",1,2},
