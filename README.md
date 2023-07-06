@@ -14,7 +14,7 @@ You can install HomeSpanUI on nearly every ESP32 controller and access the UI wi
 ![alt text](https://github.com/datjan/HomeSpanUI/blob/main/pictures/device_example.png?raw=true)
 
 
-# Setup your Controller :computer:
+# Setup Controller :computer:
 ### Hardware
 The following hardware is required:
 ```
@@ -25,15 +25,16 @@ I recommend a "LOLIN32 Lite", because of size, energy management, quality and pr
 ### Development Environment
 This sketch is for following development environment
 ```
-Arduino IDE 2.1.0
+Arduino IDE 2.1.0 or higher
 ```
 
- Required Board Manager
+Required "Boards Manager" for Arduino IDE
 ```
-Arduino IDE 2.1.0 or higher - https://github.com/espressif/arduino-esp32
+ESP32 by Espressif Systems  - https://github.com/espressif/arduino-esp32
+from Boards Manager URL: https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
 ```
 
-Following libraries are required
+Required "Libraries" for Arduino IDE
 ```
 HomeSpan - https://github.com/HomeSpan/HomeSpan
 BH1750 support - https://github.com/claws/BH1750
@@ -49,15 +50,28 @@ const char* wlan_ssid = "";     // Wifi SSID, the device will try to connect
 const char* wlan_pwd = "";      // Wifi PASSWORD, the device will try to connect
 ```
 
+### Access web interface
+After the controller has connected to your WiFi you can access the web interface typing the IP-address into your web-browser.
+
+### Device setup
+Now you can setup the devices you want to use with your controller
+
+### Pair with HomeKit
+At least pair HomeSpanUI with your HomeKit with the help of the Apple "Home" App.
+
+You have to use the “I Don’t Have a Code or Cannot Scan" or "Weitere Optionen..." function during adding process.
+
 # Features :star2:
 ### HomeKit Modes
-The HomeSpanUI supports following modes:
+HomeSpanUI supports following modes:
 ```
 * DEVICE - one device
 * BRIDGE - up to 8 devices
 ```
 
 ### Devices
+The following devices/hardware will be supported:
+
 Lights
 ```
 * LED (dimmable)
@@ -86,8 +100,21 @@ Other
 * Security System - Contact for every state in HomeKit
 ```
 
-### Responsive
-The HomeSpanUI is fully responsive and shows you the state of each device on the web interface in nearly the same way the HomeKit app does.
+### Easy controller setup
+The web interface features an easy controller setup for the usage of multiple esp32 homekit controllers.
+
+![alt text](https://github.com/datjan/HomeSpanUI/blob/main/pictures/controller_settings_example.png?raw=true)
+
+### Easy device setup and wiring
+The devices can be added and configured in an easy way. The web interface shows the wiring of the hardware parts of your homekit device.
+
+![alt text](https://github.com/datjan/HomeSpanUI/blob/main/pictures/device_settings_example.png?raw=true)
+
+### Device status
+The web interface is fully dynamic and shows you the state of each device in nearly the same way the HomeKit app does.
+
+### Action log
+HomeSpanUI logs the last 20 activities on the controller.
 
 # Notes :page_facing_up:
 This project is just beginning, so there are still a few to-dos
@@ -99,9 +126,11 @@ This project is just beginning, so there are still a few to-dos
 ```
 Actual development on this project:
 ```
+* Switch temperature sensor from Celsius to Fahrenheit
 * Outlet device
 * Garage door device
 * Leak device
 * Device sources from MODBUS, MQTT and REST APIs
+* Action Log supports MQTT send
 ```
 
