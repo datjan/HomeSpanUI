@@ -119,6 +119,7 @@ HomeSpanUI logs the last 20 activities on the controller.
 # Notes :page_facing_up:
 This project is just beginning, so there are still a few to-dos
 ```
+* a pairing qr-code is not supported at the moment because its high flash consumption
 * not every device has its icon
 * maybe some refreshing problems may appear on the web interface
 * some parts of the code could be more lightweight to save flash
