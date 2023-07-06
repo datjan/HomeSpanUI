@@ -97,3 +97,11 @@ This project is just beginning, so there are still a few to-dos
 * some parts of the code could be more lightweight to save flash
 * first response of web interface is to slow
 ```
+Actual development on this project:
+```
+* Outlet device
+* Garage door device
+* Leak device
+* Device sources from MODBUS, MQTT and REST APIs
+```
+
