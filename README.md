@@ -1,4 +1,4 @@
-# HomeSpanUI
+# HomeSpanUI :house:
 HomeSpanUI is an easy-to-use WebUI running on your ESP32 controller. It is based on the famous [HomeSpan](https://github.com/HomeSpan/HomeSpan) library which make it possible to create your own ESP32-based HomeKit devices.
 
 You can install HomeSpanUI on nearly every ESP32 controller and access the UI with a simple web browser. A few clicks and you can add own devices and pair them with HomeKit.
@@ -7,19 +7,20 @@ You can install HomeSpanUI on nearly every ESP32 controller and access the UI wi
 ### Easy? For sure! :thumbsup:
 :one: Upload HomeSpanUI to your ESP32
 
-:two: Configure you device in the web ui
+:two: Configure your device on the web interface
 
 :three: Pair the controller with HomeKit
 
 ![alt text](https://github.com/datjan/HomeSpanUI/blob/main/pictures/device_example.png?raw=true)
 
 
-# Setup your Controller
+# Setup your Controller :computer:
 ### Hardware
 The following hardware is required:
 ```
 - ESP32 (WROOM, LOLIN Lite, LOLIN S3 etc.)
 ```
+I recommend a "LOLIN32 Lite", because of size, energy management, quality and price.
 
 ### Development Environment
 This sketch is for following development environment
@@ -48,7 +49,7 @@ const char* wlan_ssid = "";     // Wifi SSID, the device will try to connect
 const char* wlan_pwd = "";      // Wifi PASSWORD, the device will try to connect
 ```
 
-# Features
+# Features :star2:
 ### HomeKit Modes
 The HomeSpanUI supports following modes:
 ```
@@ -86,5 +87,13 @@ Other
 ```
 
 ### Responsive
-The HomeSpanUI is fully responsive and shows you the state of each device in the web in nearly the same way like the HomeKit app.
+The HomeSpanUI is fully responsive and shows you the state of each device on the web interface in nearly the same way the HomeKit app does.
 
+# Notes :page_facing_up:
+This project is just beginning, so there are still a few to-dos
+```
+* not every device has its icon
+* maybe some refreshing problems may appear on the web interface
+* some parts of the code could be more lightweight to save flash
+* first response of web interface is to slow
+```
