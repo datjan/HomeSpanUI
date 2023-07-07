@@ -51,6 +51,7 @@ Setup WiFi-Connection in "HomeSpanUI.ino":
 const char* wlan_ssid = "";     // Wifi SSID, the device will try to connect
 const char* wlan_pwd = "";      // Wifi PASSWORD, the device will try to connect
 ```
+For advanced information read [WiFi documentation](docs/WiFi.md)
 
 ### Access web interface
 After the controller has connected to your WiFi you can access the web interface typing the IP-address into your web-browser.
