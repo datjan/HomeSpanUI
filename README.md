@@ -1,5 +1,5 @@
 # HomeSpanUI :house:
-HomeSpanUI is an easy-to-use WebUI running on your ESP32 controller. It is based on the famous [HomeSpan](https://github.com/HomeSpan/HomeSpan) library which make it possible to create your own ESP32-based HomeKit devices.
+HomeSpanUI is an easy-to-use WebUI running on your ESP32 controller. It is based on the famous [HomeSpan](https://github.com/HomeSpan/HomeSpan) library which makes it possible to create your own ESP32-based HomeKit devices.
 
 You can install HomeSpanUI on nearly every ESP32 controller and access the UI with a simple web browser. A few clicks and you can add own devices and pair them with HomeKit.
 
@@ -27,7 +27,7 @@ I recommend a "LOLIN32 Lite", because of size, energy management, quality and pr
 ### Development Environment
 This sketch is for following development environment
 ```
-Arduino IDE 2.1.0 or higher
+Arduino IDE 2.0.0 or higher
 ```
 
 Required "Boards Manager" for Arduino IDE
@@ -90,8 +90,8 @@ Sensors
 * Motion - SW420
 * Smoke - MQ-2
 * Temperature - DS18B20
-* Temperature - DHT11
-* Temperature - DHT22
+* Temperature & Humidity - DHT11
+* Temperature & Humidity - DHT22
 ```
 
 Other
@@ -121,7 +121,6 @@ HomeSpanUI logs the last 20 activities on the controller.
 # Notes :page_facing_up:
 This project is just beginning, so there are still a few to-dos
 ```
-* a pairing qr-code is not supported at the moment because its high flash consumption
 * not every device has its icon
 * maybe some refreshing problems may appear on the web interface
 * some parts of the code could be more lightweight to save flash
@@ -130,10 +129,11 @@ This project is just beginning, so there are still a few to-dos
 Actual development on this project:
 ```
 * Switch temperature sensor from Celsius to Fahrenheit
+* QR-Pairing-Code on web interface
+* Action Log supports MQTT send
 * Outlet device
 * Garage door device
 * Leak device
 * Device sources from MODBUS, MQTT and REST APIs
-* Action Log supports MQTT send
 ```
 
