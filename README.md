@@ -9,7 +9,9 @@ You can install HomeSpanUI on nearly every ESP32 controller and access the UI wi
 
 :two: Configure your device on the web interface
 
-:three: Pair the controller with HomeKit
+:three: Wire the device hardware to the ESP32
+
+:four: Pair the controller with HomeKit
 
 ![alt text](https://github.com/datjan/HomeSpanUI/blob/main/docs/images/device_example.png?raw=true)
 
