@@ -22,7 +22,7 @@ The following hardware is required:
 ```
 - ESP32 (WROOM, LOLIN Lite, LOLIN S3 etc.)
 ```
-I recommend a "LOLIN32 Lite", because of size, energy management, quality and price.
+For advanced information read [Hardware documentation](docs/HardwareController.md)
 
 ### Development Environment
 This sketch is for following development environment
