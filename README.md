@@ -11,7 +11,7 @@ You can install HomeSpanUI on nearly every ESP32 controller and access the UI wi
 
 :three: Pair the controller with HomeKit
 
-![alt text](https://github.com/datjan/HomeSpanUI/blob/main/pictures/device_example.png?raw=true)
+![alt text](https://github.com/datjan/HomeSpanUI/blob/main/docs/images/device_example.png?raw=true)
 
 
 # Setup Controller :computer:
@@ -103,12 +103,12 @@ Other
 ### Easy controller setup
 The web interface features an easy controller setup for the usage of multiple esp32 homekit controllers.
 
-![alt text](https://github.com/datjan/HomeSpanUI/blob/main/pictures/controller_settings_example.png?raw=true)
+![alt text](https://github.com/datjan/HomeSpanUI/blob/main/docs/images/controller_settings_example.png?raw=true)
 
 ### Easy device setup and wiring
 The devices can be added and configured in an easy way. The web interface shows the wiring of the hardware parts of your homekit device.
 
-![alt text](https://github.com/datjan/HomeSpanUI/blob/main/pictures/device_settings_example.png?raw=true)
+![alt text](https://github.com/datjan/HomeSpanUI/blob/main/docs/images/device_settings_example.png?raw=true)
 
 ### Device status
 The web interface is fully dynamic and shows you the state of each device in nearly the same way the HomeKit app does.
