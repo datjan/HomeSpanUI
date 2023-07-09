@@ -15,7 +15,10 @@ The LOLIN32 Lite is a small ESP32-board with battery connector and charging poss
 
 [Datasheet](https://cdn.shopify.com/s/files/1/1509/1638/files/ESP32_Lolin32_Datenblatt_AZ-Delivery_Vertriebs_GmbH.pdf?v=1631862397)
 
+### Pinout
 ![alt text](https://github.com/datjan/HomeSpanUI/blob/main/docs/images/esp32_lolin32lite_pinout.png?raw=true)
+### Arduino Setup
+![alt text](https://github.com/datjan/HomeSpanUI/blob/main/docs/images/esp32_lolin32lite_arduino_setup.png?raw=true)
 
 
 ## WEMOS LOLIN S3
@@ -23,8 +26,10 @@ The LOLIN S3 comes with different FLASH and PSRAM sizes. Sometimes you need more
 
 [Datasheet](https://www.wemos.cc/en/latest/s3/s3.html)
 
+### Pinout
 ![alt text](https://github.com/datjan/HomeSpanUI/blob/main/docs/images/esp32_lolins3_pinout.png?raw=true)
-
+### Arduino Setup
+![alt text](https://github.com/datjan/HomeSpanUI/blob/main/docs/images/esp32_lolins3_arduino_setup.png?raw=true)
 
 ---
 
