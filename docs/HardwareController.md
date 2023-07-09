@@ -25,3 +25,7 @@ The LOLIN S3 comes with different FLASH and PSRAM sizes. Sometimes you need more
 
 ![alt text](https://github.com/datjan/HomeSpanUI/blob/main/docs/images/esp32_lolins3_pinout.png?raw=true)
 
+
+---
+
+[↩️](../README.md) Back to the Welcome page
