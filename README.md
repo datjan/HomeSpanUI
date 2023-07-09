@@ -46,7 +46,7 @@ DHT support - https://github.com/adafruit/DHT-sensor-library
 ```
 
 ### Setup before Upload
-Setup WiFi-Connection in "HomeSpanUI.ino":
+Setup WiFi-Connection in "setup.h":
 ```
 const char* wlan_ssid = "";     // Wifi SSID, the device will try to connect
 const char* wlan_pwd = "";      // Wifi PASSWORD, the device will try to connect
