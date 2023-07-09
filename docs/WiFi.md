@@ -35,3 +35,7 @@ Shortly Pull Up this pin to activate the Access Point
 
 A new WiFi-Network "HomeKitController" will appear and you can connect without a password.
 The landingpage will open automatically. There you can configure your WiFi-Credentials.
+
+---
+
+[↩️](../README.md) Back to the Welcome page
