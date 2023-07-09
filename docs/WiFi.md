@@ -7,7 +7,7 @@ There are two ways to publish the credentials to HomeSpanUI.
 ## In Source Code
 Befor uploading the Adruino-sketch you can enter the WiFi-Credentials into the sketch itself.
 
-Setup WiFi-Connection in "HomeSpanUI.ino":
+Setup WiFi-Connection in "setup.h":
 ```
 const char* wlan_ssid = "";     // Wifi SSID, the device will try to connect
 const char* wlan_pwd = "";      // Wifi PASSWORD, the device will try to connect
