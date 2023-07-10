@@ -45,6 +45,8 @@ DS18B20 support - https://github.com/milesburton/Arduino-Temperature-Control-Lib
 DHT support - https://github.com/adafruit/DHT-sensor-library
 ```
 
+For advanced information read [Dependencies documentation](docs/Dependencies.md)
+
 ### Setup before Upload
 Setup WiFi-Connection in "setup.h":
 ```
@@ -60,9 +62,7 @@ After the controller has connected to your WiFi you can access the web interface
 Now you can setup the devices you want to use with your controller
 
 ### Pair with HomeKit
-At least pair HomeSpanUI with your HomeKit with the help of the Apple "Home" App.
-
-You have to use the “I Don’t Have a Code or Cannot Scan" or "Weitere Optionen..." function during adding process.
+At least pair HomeSpanUI with your HomeKit with the help of the qr-code published on the webinterface.
 
 For advanced information read [HomeKit pairing documentation](docs/HomeKitPairing.md)
 
