@@ -118,6 +118,11 @@ function handleServerResponse(){
         FadeIn('devices_header');
         FadeIn('div_device_add');
         FadeIn('div_device_reload');
+        // Fill QR-Code
+        document.getElementById('qrcode').style.opacity = 0;
+        document.getElementById('qrcode').innerHTML = "";
+        generateQrCode(json_obj.homekit.qrcode);
+        FadeIn('qrcode');
         // Fill Hub Footer
         document.getElementById('box_footer').style.opacity = 0;
         document.getElementById('box_footer').innerHTML = '<a href="https://www.homekitblogger.de/" target="_blank" class="box_footer_link">homekitblogger.de</a> | ' + json_obj.homekit.type + " | v" + json_obj.version;
@@ -582,8 +587,8 @@ function openSettings(device_id,view_type = "device",fade = true, overrule_devic
         if (device_type=="rgbled") {name_pin_1 = "Red";name_pin_2 = "Green";name_pin_3 = "Blue";};
         if (device_type=="maxled") {name_pin_1 = "CS/SS";name_text_1 = "Sym1";name_text_2 = "Sym2";name_text_3 = "Sym3";};
         if (device_type=="temt6000") {name_pin_1 = "ADC IN";name_float_1 = "Light Offset";}
-        if (device_type=="ds18b20") {name_pin_1 = "ADC IN";name_float_1 = "Temp. Offset";}
-        if (device_type=="dht11" || device_type=="dht22") {name_pin_1 = "ADC IN";name_float_1 = "Temp. Offset";name_float_2 = "Humidity Offset";}
+        if (device_type=="ds18b20") {name_pin_1 = "ADC IN";name_float_1 = "Temp. Offset";name_bool_1 = "Celsius";}
+        if (device_type=="dht11" || device_type=="dht22") {name_pin_1 = "ADC IN";name_float_1 = "Temp. Offset";name_float_2 = "Humidity Offset";name_bool_1 = "Celsius";}
         if (device_type=="sw420" || device_type=="hcsr501" || device_type=="mq2") {name_pin_1 = "GPIO IN";name_float_1 = "Motion Timer (millsec)";}
         if (device_type=="bh1750") name_float_1 = "Light Offset";
         if (device_type=="outlet") name_pin_1 = "GPIO OUT";
@@ -687,7 +692,7 @@ function openSettings(device_id,view_type = "device",fade = true, overrule_devic
             result_text += "</span></td></tr></table></div></td></tr>";
         }
         // Bool 1
-        if (['led'].includes(device_type)) {
+        if (['led','dht11','dht22','ds18b20'].includes(device_type)) {
             result_text += "<tr><td><div class=\"box_input\"><table style=\"width:100%;border:0px;padding:0;margin:0;\"><tr><td style=\"width:60%;\"><span class=\"info_text\">" + name_bool_1 + "</span></td><td style=\"text-align:right;\"><span class=\"info_text_light\">";
             result_text += "    <select id='device_bool_1'>";
             if (device_bool_1==0) result_text += "<option value=\"0\" selected>No</option>";

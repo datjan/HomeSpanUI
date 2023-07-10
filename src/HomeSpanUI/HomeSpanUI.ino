@@ -28,6 +28,7 @@
 #include "webserver_style.h"    // Website css
 #include "webserver_java.h"     // Website java
 #include "webserver_javahelper.h"// Website java
+#include "webserver_javaqr.h".  // Website java
 
 
 WebServer webServer(80);  // create WebServer on port 80
@@ -253,6 +254,9 @@ void setupWeb() {
   });
   webServer.on("/java_helper.js", []() {
     webServer.send(200, "application/javascript", index_javahelper);
+  });
+  webServer.on("/java_qr.js", []() {
+    webServer.send(200, "application/javascript", index_javaqr);
   });
 
   // Rest Pictures ----------------------------------

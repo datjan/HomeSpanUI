@@ -7,7 +7,7 @@ const char index_page[] PROGMEM = R"=====(
     
     <TITLE>HomeKit Controller</TITLE>
 
-    <link rel="stylesheet" href="style.css?v=36" type="text/css" media="screen" />
+    <link rel="stylesheet" href="style.css?v=39" type="text/css" media="screen" />
     <script>
       var methodending = '';
       var xmlHttpRepository = createXmlHttpObject();
@@ -43,8 +43,9 @@ const char index_page[] PROGMEM = R"=====(
         return xmlHttp;
       }
     </script>
-    <script src="java.js?v=36"></script>
-    <script src="java_helper.js?v=36"></script>
+    <script src="java.js?v=39"></script>
+    <script src="java_helper.js?v=39"></script>
+    <script src="java_qr.js?v=39"></script>
 
   </HEAD>
   <BODY onload='actPicturesControllerAndDevices();actState();'>
@@ -73,7 +74,11 @@ const char index_page[] PROGMEM = R"=====(
     <div id="table_restart" class="table_main" style="width:600px;text-align:center;">
         <A id='restart_item'></A>
     </div> 
-    <br><br><br><br><br>
+    <br><br>
+    <div id="table_qrcode" class="table_main" style="width:600px;text-align:center;padding-top:30px;">
+      <div id="qrcode" classe="waiting_gray"></div>
+    </div>     
+    <br><br><br><br>
     <div id="box_footer" class="box_footer"></div>
     </CENTER>
   </BODY>

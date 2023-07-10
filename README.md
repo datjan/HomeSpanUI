@@ -64,6 +64,8 @@ At least pair HomeSpanUI with your HomeKit with the help of the Apple "Home" App
 
 You have to use the “I Don’t Have a Code or Cannot Scan" or "Weitere Optionen..." function during adding process.
 
+For advanced information read [HomeKit pairing documentation](docs/HomeKitPairing.md)
+
 # Features :star2:
 ### HomeKit Modes
 HomeSpanUI supports following modes:
@@ -129,8 +131,6 @@ This project is just beginning, so there are still a few to-dos
 ```
 Actual development on this project:
 ```
-* Switch temperature sensor from Celsius to Fahrenheit
-* QR-Pairing-Code on web interface
 * Action Log supports MQTT send
 * Outlet device
 * Garage door device

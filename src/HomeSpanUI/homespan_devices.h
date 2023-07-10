@@ -551,7 +551,8 @@ struct deviceTemperatureSensor : Service::TemperatureSensor {      // A Temperat
       sensorsDallas = new DallasTemperature(oneWirePtr);
       sensorsDallas->begin();
       strcpy(deviceData[this->deviceid].state_text, String(this->temperature).c_str());
-      strcat(deviceData[this->deviceid].state_text, " C");
+      if (deviceData[this->deviceid].bool_1) strcat(deviceData[this->deviceid].state_text, " C");
+      else strcat(deviceData[this->deviceid].state_text, " F");
       deviceData[this->deviceid].state_marked = false;
       // Init Log
       logDevice(this->deviceid,logKind::INIT);
@@ -567,7 +568,8 @@ struct deviceTemperatureSensor : Service::TemperatureSensor {      // A Temperat
       sensorsDht = new DHT(deviceData[this->deviceid].pin_1, DHTTYPE);
       sensorsDht->begin(); 
       strcpy(deviceData[this->deviceid].state_text, String(this->temperature).c_str());
-      strcat(deviceData[this->deviceid].state_text, " C");
+      if (deviceData[this->deviceid].bool_1) strcat(deviceData[this->deviceid].state_text, " C");
+      else strcat(deviceData[this->deviceid].state_text, " F");
       strcat(deviceData[this->deviceid].state_text, " - ");
       strcat(deviceData[this->deviceid].state_text, String(this->humidity).c_str());
       strcat(deviceData[this->deviceid].state_text, " %");
@@ -586,7 +588,8 @@ struct deviceTemperatureSensor : Service::TemperatureSensor {      // A Temperat
       sensorsDht = new DHT(deviceData[this->deviceid].pin_1, DHTTYPE);
       sensorsDht->begin(); 
       strcpy(deviceData[this->deviceid].state_text, String(this->temperature).c_str());
-      strcat(deviceData[this->deviceid].state_text, " C");
+      if (deviceData[this->deviceid].bool_1) strcat(deviceData[this->deviceid].state_text, " C");
+      else strcat(deviceData[this->deviceid].state_text, " F");
       strcat(deviceData[this->deviceid].state_text, " - ");
       strcat(deviceData[this->deviceid].state_text, String(this->humidity).c_str());
       strcat(deviceData[this->deviceid].state_text, " %");
@@ -608,14 +611,14 @@ struct deviceTemperatureSensor : Service::TemperatureSensor {      // A Temperat
     // Get state
     if (strcmp(deviceData[this->deviceid].type.code, "ds18b20") == 0) {
       sensorsDallas->requestTemperatures();
-      this->temperature = sensorsDallas->getTempCByIndex(0) + deviceData[this->deviceid].float_1;// Celsius
-      //this->temperature = sensorsDallas->getTempFByIndex(0) + deviceData[this->deviceid].offset_temp;// Fahrenheit
+      if (deviceData[this->deviceid].bool_1) this->temperature = sensorsDallas->getTempCByIndex(0) + deviceData[this->deviceid].float_1;// Celsius
+      else this->temperature = sensorsDallas->getTempFByIndex(0) + deviceData[this->deviceid].float_1;// Fahrenheit
       if (this->temperature<=-50) { this->temperature = -50; logDevice(this->deviceid,logKind::ERROR,"error temperature value"); }
       if (isnan(this->temperature)) { this->temperature = 0; logDevice(this->deviceid,logKind::ERROR,"error reading temperature"); }
     }
     else if (strcmp(deviceData[this->deviceid].type.code, "dht11") == 0 || strcmp(deviceData[this->deviceid].type.code, "dht22") == 0) {
-      this->temperature = sensorsDht->readTemperature() + deviceData[this->deviceid].float_1;   // Celsius
-      //this->temperature = sensorsDht->readTemperature(true) + deviceData[this->deviceid].offset_temp;   // Fahrenheit
+      if (deviceData[this->deviceid].bool_1) this->temperature = sensorsDht->readTemperature() + deviceData[this->deviceid].float_1;   // Celsius
+      else this->temperature = sensorsDht->readTemperature(true) + deviceData[this->deviceid].float_1;   // Fahrenheit
       this->humidity = sensorsDht->readHumidity() + deviceData[this->deviceid].float_2; 
       if (this->temperature<=-50) { this->temperature = -50; logDevice(this->deviceid,logKind::ERROR,"error temperature value"); }
       if (this->humidity<=0) { this->humidity = 0; logDevice(this->deviceid,logKind::ERROR,"error humidity value"); }
@@ -633,12 +636,14 @@ struct deviceTemperatureSensor : Service::TemperatureSensor {      // A Temperat
     // Device state
     if (strcmp(deviceData[this->deviceid].type.code, "ds18b20") == 0) {
       strcpy(deviceData[this->deviceid].state_text, String(this->temperature).c_str());
-      strcat(deviceData[this->deviceid].state_text, " C");
+      if (deviceData[this->deviceid].bool_1) strcat(deviceData[this->deviceid].state_text, " C");
+      else strcat(deviceData[this->deviceid].state_text, " F");
       deviceData[this->deviceid].state_marked = false;
     }
     else if (strcmp(deviceData[this->deviceid].type.code, "dht11") == 0 || strcmp(deviceData[this->deviceid].type.code, "dht22") == 0) {
       strcpy(deviceData[this->deviceid].state_text, String(this->temperature).c_str());
-      strcat(deviceData[this->deviceid].state_text, " C");
+      if (deviceData[this->deviceid].bool_1) strcat(deviceData[this->deviceid].state_text, " C");
+      else strcat(deviceData[this->deviceid].state_text, " F");
       strcat(deviceData[this->deviceid].state_text, " - ");
       strcat(deviceData[this->deviceid].state_text, String(this->humidity).c_str());
       strcat(deviceData[this->deviceid].state_text, " %");

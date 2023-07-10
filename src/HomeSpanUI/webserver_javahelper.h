@@ -32,7 +32,7 @@ function saveDevice(device_id) {
         if (['maxled'].includes(device_type)) {
             params += "&device_text_3=" + document.getElementById('device_text_3').value;
         }
-        if (['led'].includes(device_type)) {
+        if (['led','dht11','dht22','ds18b20'].includes(device_type)) {
             params += "&device_bool_1=" + document.getElementById('device_bool_1').value;
         }
         if (['dht11','dht22','ds18b20','bh1750','temt6000','sw420','hcsr501','mq2'].includes(device_type)) {
@@ -303,14 +303,15 @@ function charFloat(char) {
 }   
 // QR Code
 function generateQrCode(qrtext) {
-    var qrcode = new QRCode(document.getElementById("qrcode"), {
-        text: qrtext,
-        width: 64,
-        height: 64,
-        colorDark : "#000000",
-        colorLight : "#f2f2f2",
-        correctLevel : QRCode.CorrectLevel.H
+    var qr4 = new HsuiQR({
+        url: qrtext,
+        size: 200,
+        colorDark : "#8dcaa7",
+        colorLight : "#d6f5d6",
+        toTable: false,
+        ecclevel: 1,
+        noBorder: true,
     });
-    //qrcode.clear(); // clear the code.
+    document.getElementById("qrcode").appendChild(qr4.domElement);
 }
 )=====";
