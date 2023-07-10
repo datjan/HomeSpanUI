@@ -28,7 +28,7 @@
 #include "webserver_style.h"    // Website css
 #include "webserver_java.h"     // Website java
 #include "webserver_javahelper.h"// Website java
-#include "webserver_javaqr.h".  // Website java
+#include "webserver_javaqr.h"  // Website java
 
 
 WebServer webServer(80);  // create WebServer on port 80

@@ -1,7 +1,5 @@
 # HomeKit Pairing
 
-HomeSpanUI connects to you HomeKit.
-
 There are two ways to pair HomeSpanUI to HomeKit.
 
 ## use QR-Code
