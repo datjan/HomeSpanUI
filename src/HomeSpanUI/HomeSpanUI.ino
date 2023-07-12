@@ -16,6 +16,7 @@
 #include <OneWire.h>            // OneWire library  for devices: DS18B20                  https://github.com/PaulStoffregen/OneWire
 #include <DallasTemperature.h>  // Dallas library   for devices: DS18B20                  https://github.com/milesburton/Arduino-Temperature-Control-Library
 #include "DHT.h"                // DHT library      for devices: DHT11, DHT22             https://github.com/adafruit/DHT-sensor-library
+#include <PubSubClient.h>       // MQTT library     for action logging                    https://github.com/knolleary/pubsubclient
 // Devices Support - internal libraries
 #include "class_ledmatrix.h"    // LEDMATR library  for devices: MAX7219                  inspired from https://github.com/JohnChung93/esp32_youtube_max7219
 // HomeSpan Support - external library
@@ -32,10 +33,15 @@
 
 
 WebServer webServer(80);  // create WebServer on port 80
+WiFiClient mqtt_wifi_client;       // WiFi client
+PubSubClient mqtt_client(mqtt_wifi_client); // MQTT client
 
 // handle for NVS storage
 nvs_handle controllerNVS;
 nvs_handle deviceNVS;
+// state
+const char* status_global = "none";   // Homespan Status
+bool status_mqtt_connected = false;   // MQTT Status
 
 uint8_t homekit_maxdevices_device = 1;         // In device mode only one single device can be configured
 uint8_t homekit_maxdevices_bridge = aDEVICES;  // In bridge mode up to max devices can be configured
@@ -44,7 +50,8 @@ void setup() {
 
   Serial.begin(115200);
 
-  logEntry(controllerData.homekit_name,(char*)controllerData.homekit_serialnumber, "start");
+  //logEntry(controllerData.homekit_name,(char*)controllerData.homekit_serialnumber, "start");
+  logEntry(controllerData.homekit_name, logKind::INIT,"ok");
 
   // Get setup from on volatile storage
   readFromNVS();
@@ -78,6 +85,8 @@ void setup() {
 
   homeSpan.setWifiCredentials(wlan_ssid, wlan_pwd);              // Wifi Access Data
   homeSpan.setPairingCode(controllerData.homekit_code);  // HomeKit Pairing Code
+
+  homeSpan.reserveSocketConnections(1);
 
   homeSpan.setStatusCallback(statusUpdate);  // set callback function
 
@@ -221,6 +230,7 @@ void setup() {
       else if (strcmp(deviceData[0].type.code, "batmodbus") == 0) sprintf(category,"%d",(int)Category::Other);
   }
   getQrCodeText(atoi(controllerData.homekit_code),controllerData.homekit_setupid,atoi(category));
+
 }  // end of setup()
 
 //////////////////////////////////////
@@ -232,6 +242,8 @@ void loop() {
   webServer.handleClient();
   // Check AccessPoint pin, if closed
   if (digitalRead(controllerData.board_pin_ap) == HIGH) { startAccessPoint(); }  // Closed
+  // MQTT send Log
+  processMQTT();
 }  // end of loop()
 
 //////////////////////////////////////
@@ -280,7 +292,7 @@ void setupWeb() {
   webServer.on("/rest", []() {
     String JSON = "{";
     JSON += "\"info\":\"www.homekitblogger.de\",";
-    JSON += "\"status\":\"" + String(controllerData.status) + "\",";
+    JSON += "\"status\":\"" + String(status_global) + "\",";
     JSON += "\"restartrequired\":" + String(controllerData.restartrequired) + ",";
     JSON += "\"version\":\"" + String(controllerData.version) + "\",";
     JSON += "\"controller\":{";
@@ -323,6 +335,15 @@ void setupWeb() {
     JSON += " \"pin_spi_mosi\":" + String(MOSI) + ",";
     JSON += " \"pin_spi_clk\":" + String(SCK);
     JSON += "},";
+    JSON += "\"mqtt\":{";
+    JSON += " \"active\":" + String(controllerData.mqtt_active) + ",";
+    if (status_mqtt_connected) JSON += " \"status\":\"connected\",";
+    else JSON += " \"status\":\"disconnected\",";
+    JSON += " \"server\":\"" + String(controllerData.mqtt_server) + "\",";
+    JSON += " \"port\":" + String(controllerData.mqtt_port) + ",";
+    JSON += " \"user\":\"" + String(controllerData.mqtt_user) + "\",";
+    JSON += " \"password\":\"" + String(controllerData.mqtt_password) + "\"";
+    JSON += "},";
     JSON += "\"homekit_devices\":[";
     for (int i = 0; i < aDEVICES; i++) {
       if (i > 0) JSON += ",";
@@ -334,7 +355,7 @@ void setupWeb() {
       JSON += " \"pin_1_reverse\":" + String(deviceData[i].pin_1_reverse) + ", \"pin_2_reverse\":" + String(deviceData[i].pin_2_reverse) + ", \"pin_3_reverse\":" + String(deviceData[i].pin_3_reverse) + ", \"pin_4_reverse\":" + String(deviceData[i].pin_4_reverse) + ",";
       JSON += " \"bool_1\":" + String(deviceData[i].bool_1) + ",";
       JSON += " \"float_1\":" + String(deviceData[i].float_1) + ", \"float_2\":" + String(deviceData[i].float_2) + ",";
-      JSON += " \"state\":\"" + String(deviceData[i].state_text) + "\", \"marked\":" + String(deviceData[i].state_marked) + ", \"error_last\":\"" + String(deviceData[i].error_last) + "\"}";
+      JSON += " \"state\":\"waiting...\", \"marked\":" + String(deviceData[i].state_marked) + ", \"error_last\":\"" + String(deviceData[i].error_last) + "\"}";
     }
     JSON += "],";
     JSON += "\"pins\":[";
@@ -348,10 +369,10 @@ void setupWeb() {
       if (MOSI==pinnum) showme = false;
       if (SCK==pinnum) showme = false;
       for (int devnum = 0; devnum < aDEVICES; devnum++) {
-        if (deviceData[devnum].pin_1==pinnum) showme = false;
-        if (deviceData[devnum].pin_2==pinnum) showme = false;
-        if (deviceData[devnum].pin_3==pinnum) showme = false;
-        if (deviceData[devnum].pin_4==pinnum) showme = false;
+        if (deviceData[devnum].active && deviceData[devnum].pin_1==pinnum) showme = false;
+        if (deviceData[devnum].active && deviceData[devnum].pin_2==pinnum) showme = false;
+        if (deviceData[devnum].active && deviceData[devnum].pin_3==pinnum) showme = false;
+        if (deviceData[devnum].active && deviceData[devnum].pin_4==pinnum) showme = false;
       }
       if (showme) {
         if (!firstrow) JSON += ",";
@@ -385,17 +406,19 @@ void setupWeb() {
   webServer.on("/state", []() {
     String JSON = "{";
     JSON += "\"info\":\"www.homekitblogger.de\",";
-    JSON += "\"status\":\"" + String(controllerData.status) + "\",";
+    JSON += "\"status\":\"" + String(status_global) + "\",";
     JSON += "\"runtime_sec\":" + String(millis() / 1000) + ",";
     JSON += "\"wifi_rssi\":\"" + String(WiFi.RSSI()) + "\",";
     JSON += "\"heap_total\":" + String(ESP.getHeapSize()) + ",";
     JSON += "\"heap_free\":" + String(ESP.getFreeHeap()) + ",";
     JSON += "\"psram_total\":" + String(ESP.getPsramSize()) + ",";
     JSON += "\"psram_free\":" + String(ESP.getFreePsram()) + ",";
+    if (status_mqtt_connected) JSON += " \"mqtt_status\":\"connected\",";
+    else JSON += " \"mqtt_status\":\"disconnected\",";
     JSON += "\"devices_state\":[";
     for (int i = 0; i < aDEVICES; i++) {
       if (i > 0) JSON += ",";
-      JSON += "{\"id\":" + String(i + 1) + ", \"active\":" + String(deviceData[i].active) + ", \"state\":\"" + String(deviceData[i].state_text) + "\", \"marked\":" + String(deviceData[i].state_marked) + "}";
+      JSON += "{\"id\":" + String(i + 1) + ", \"active\":" + String(deviceData[i].active) + ", \"state\":\"" + String(deviceData[i].state_1_value) + String(deviceData[i].state_1_unit) + " " + String(deviceData[i].state_2_value) + String(deviceData[i].state_2_unit) + "\", \"marked\":" + String(deviceData[i].state_marked) + "}";
     }
     JSON += "]";
     JSON += "}";
@@ -409,7 +432,7 @@ void setupWeb() {
     JSON += "\"log\":[";
     for (int i = 0; i < aLogging; i++) {
       if (i > 0) JSON += ",";
-      JSON += "{\"position\":" + String(i) + ",\"runtime_sec\":" + String(actionLogging[i].runtime_sec) + ", \"devicename\":\"" + String(actionLogging[i].devicename) + "\", \"homekitid\":\"" + String(actionLogging[i].homekitid) + "\", \"action\":\"" + String(actionLogging[i].action) + "\"}";
+      JSON += "{\"position\":" + String(i) + ",\"runtime_sec\":" + String(actionLogging[i].runtime_sec) + ", \"devicename\":\"" + String(actionLogging[i].name) + "\", \"action\":\"" + String(logKindStr[actionLogging[i].kind]) + " " + String(actionLogging[i].value) + "" + String(actionLogging[i].unit) + "\"}";
     }
     JSON += "]";
     JSON += "}";
@@ -451,43 +474,60 @@ void setupWeb() {
       for (int i = 0; i < webServer.args(); i++) {
         if (webServer.argName(i) == "device_name") {
           if (webServer.arg(i).length() >= 16) {success=false; content = "name can be up to 15 chars";}
+          else if (!isValidAlphabet(webServer.arg(i))) {success=false; content = "name must be alphabet";}
           else strcpy(deviceData[device_id - 1].name, webServer.arg(i).c_str());
         } else if (webServer.argName(i) == "device_type") {
           if (webServer.arg(i).length() >= 11) {success=false; content = "type can be up to 10 chars";}
+          else if (!isValidAlphabet(webServer.arg(i))) {success=false; content = "type must be alphabet";}
           else {
             for (int typ = 0; typ < aTYPES; typ++) {
               if (strcmp(typeData[typ].code, webServer.arg(i).c_str()) == 0) deviceData[device_id - 1].type = typeData[typ];
             }
           }
         } else if (webServer.argName(i) == "device_pin_1") {
-          if (!isValidNumber(webServer.arg(i))) {success=false; content = "pin_1 must be numeric";}
+          if (webServer.arg(i).length() >= 3) {success=false; content = "pin_1 can be up to 2 chars";}
+          else if (!isValidNumber(webServer.arg(i))) {success=false; content = "pin_1 must numeric";}
           else deviceData[device_id - 1].pin_1 = webServer.arg(i).toInt();
         } else if (webServer.argName(i) == "device_pin_2") {
-          if (!isValidNumber(webServer.arg(i))) {success=false; content = "pin_2 must be numeric";}
+          if (webServer.arg(i).length() >= 3) {success=false; content = "pin_2 can be up to 2 chars";}
+          else if (!isValidNumber(webServer.arg(i))) {success=false; content = "pin_2 must numeric";}
           else deviceData[device_id - 1].pin_2 = webServer.arg(i).toInt();
         } else if (webServer.argName(i) == "device_pin_3") {
-          if (!isValidNumber(webServer.arg(i))) {success=false; content = "pin_3 must be numeric";}
+          if (webServer.arg(i).length() >= 3) {success=false; content = "pin_3 can be up to 2 chars";}
+          else if (!isValidNumber(webServer.arg(i))) {success=false; content = "pin_3 must numeric";}
           else deviceData[device_id - 1].pin_3 = webServer.arg(i).toInt();
         } else if (webServer.argName(i) == "device_pin_4") {
-          if (!isValidNumber(webServer.arg(i))) {success=false; content = "pin_4 must be numeric";}
+          if (webServer.arg(i).length() >= 3) {success=false; content = "pin_4 can be up to 2 chars";}
+          else if (!isValidNumber(webServer.arg(i))) {success=false; content = "pin_4 must numeric";}
           else deviceData[device_id - 1].pin_4 = webServer.arg(i).toInt();
         } else if (webServer.argName(i) == "device_pin_1_reverse") {
-          deviceData[device_id - 1].pin_1_reverse = webServer.arg(i).toInt();
+          if (webServer.arg(i).length() != 1) {success=false; content = "pin_1_reverse must be bool";}
+          else if (!isValidNumber(webServer.arg(i))) {success=false; content = "pin_1_reverse must numeric";}
+          else deviceData[device_id - 1].pin_1_reverse = webServer.arg(i).toInt();
         } else if (webServer.argName(i) == "device_pin_2_reverse") {
-          deviceData[device_id - 1].pin_2_reverse = webServer.arg(i).toInt();
+          if (webServer.arg(i).length() != 1) {success=false; content = "pin_2_reverse must be bool";}
+          else if (!isValidNumber(webServer.arg(i))) {success=false; content = "pin_2_reverse must numeric";}
+          else deviceData[device_id - 1].pin_2_reverse = webServer.arg(i).toInt();
         } else if (webServer.argName(i) == "device_pin_3_reverse") {
-          deviceData[device_id - 1].pin_3_reverse = webServer.arg(i).toInt();
+          if (webServer.arg(i).length() != 1) {success=false; content = "pin_3_reverse must be bool";}
+          else if (!isValidNumber(webServer.arg(i))) {success=false; content = "pin_3_reverse must numeric";}
+          else deviceData[device_id - 1].pin_3_reverse = webServer.arg(i).toInt();
         } else if (webServer.argName(i) == "device_pin_4_reverse") {
-          deviceData[device_id - 1].pin_4_reverse = webServer.arg(i).toInt();
+          if (webServer.arg(i).length() != 1) {success=false; content = "pin_4_reverse must be bool";}
+          else if (!isValidNumber(webServer.arg(i))) {success=false; content = "pin_4_reverse must numeric";}
+          else deviceData[device_id - 1].pin_4_reverse = webServer.arg(i).toInt();
         } else if (webServer.argName(i) == "device_text_1") {
           if (webServer.arg(i).length() >= 17) {success=false; content = "text_1 can be up to 16 chars";}
+          else if (!isValidAlphabet(webServer.arg(i))) {success=false; content = "text_1 must be alphabet";}
           else strcpy(deviceData[device_id - 1].text_1, webServer.arg(i).c_str());
         } else if (webServer.argName(i) == "device_text_2") {
           if (webServer.arg(i).length() >= 17) {success=false; content = "text_2 can be up to 16 chars";}
-          strcpy(deviceData[device_id - 1].text_2, webServer.arg(i).c_str());
+          else if (!isValidAlphabet(webServer.arg(i))) {success=false; content = "text_2 must be alphabet";}
+          else strcpy(deviceData[device_id - 1].text_2, webServer.arg(i).c_str());
         } else if (webServer.argName(i) == "device_text_3") {
           if (webServer.arg(i).length() >= 17) {success=false; content = "text_3 can be up to 16 chars";}
-          strcpy(deviceData[device_id - 1].text_3, webServer.arg(i).c_str());
+          else if (!isValidAlphabet(webServer.arg(i))) {success=false; content = "text_3 must be alphabet";}
+          else strcpy(deviceData[device_id - 1].text_3, webServer.arg(i).c_str());
         } else if (webServer.argName(i) == "device_bool_1") {
           deviceData[device_id - 1].bool_1 = webServer.arg(i).toInt();
         } else if (webServer.argName(i) == "device_float_1") {
@@ -542,16 +582,63 @@ void setupWeb() {
     // Configure Board
     for (int i = 0; i < webServer.args(); i++) {
       if (webServer.argName(i) == "board_pin_ap") {
-        if (!isValidNumber(webServer.arg(i))) {success=false; content = "board_pin_ap must numeric";}
+        if (webServer.arg(i).length() >= 3) {success=false; content = "board_pin_ap can be up to 2 chars";}
+        else if (!isValidNumber(webServer.arg(i))) {success=false; content = "board_pin_ap must numeric";}
         else controllerData.board_pin_ap = webServer.arg(i).toInt();
       }
       if (webServer.argName(i) == "board_pin_i2c_sda") {
-        if (!isValidNumber(webServer.arg(i))) {success=false; content = "board_pin_i2c_sda must numeric";}
+        if (webServer.arg(i).length() >= 3) {success=false; content = "board_pin_i2c_sda can be up to 2 chars";}
+        else if (!isValidNumber(webServer.arg(i))) {success=false; content = "board_pin_i2c_sda must numeric";}
         else controllerData.board_pin_i2c_sda = webServer.arg(i).toInt();
       }
       if (webServer.argName(i) == "board_pin_i2c_scl") {
-        if (!isValidNumber(webServer.arg(i))) {success=false; content = "board_pin_i2c_scl must numeric";}
+        if (webServer.arg(i).length() >= 3) {success=false; content = "board_pin_i2c_scl can be up to 2 chars";}
+        else if (!isValidNumber(webServer.arg(i))) {success=false; content = "board_pin_i2c_scl must numeric";}
         else controllerData.board_pin_i2c_scl = webServer.arg(i).toInt();
+      }
+    }
+
+    if(success) {
+      // Save to non volatile storage
+      writeToNVS();
+    }
+    // Respond
+    webServer.send(200, "text/html", "{\"success\":" + String(success) + ",\"message\":\"" + content + "\"}");
+    if(success) {
+      delay(1000);  // Wait needed to have time for the webserver response!
+      restartController();
+    }
+  });
+
+// Save MQTT ----------------------------------
+  webServer.on("/mqttsave", []() {
+    bool success = true;
+    String content = "";
+  
+    // Configure mqtt
+    for (int i = 0; i < webServer.args(); i++) {
+      if (webServer.argName(i) == "mqtt_active") {
+          controllerData.mqtt_active = webServer.arg(i).toInt();
+      }
+      if (webServer.argName(i) == "mqtt_server") {
+        if (webServer.arg(i).length() >= 16) {success=false; content = "mqtt_server can be up to 15 chars";}
+        else if (!isValidIpAddress(webServer.arg(i))) {success=false; content = "mqtt_server must be ip-address";}
+        else strcpy(controllerData.mqtt_server, webServer.arg(i).c_str());
+      }
+      if (webServer.argName(i) == "mqtt_port") {
+        if (webServer.arg(i).length() >= 6) {success=false; content = "mqtt_port can be up to 5 chars";}
+        else if (!isValidNumber(webServer.arg(i))) {success=false; content = "mqtt_port must numeric";}
+        else controllerData.mqtt_port = webServer.arg(i).toInt();
+      }
+      if (webServer.argName(i) == "mqtt_user") {
+        if (webServer.arg(i).length() >= 16) {success=false; content = "mqtt_user can be up to 15 chars";}
+        else if (!isValidAlphabet(webServer.arg(i))) {success=false; content = "mqtt_user must be alphabet";}
+        else strcpy(controllerData.mqtt_user, webServer.arg(i).c_str());
+      }
+      if (webServer.argName(i) == "mqtt_password") {
+        if (webServer.arg(i).length() >= 16) {success=false; content = "mqtt_password can be up to 15 chars";}
+        else if (!isValidAlphabet(webServer.arg(i))) {success=false; content = "mqtt_password must be alphabet";}
+        else strcpy(controllerData.mqtt_password, webServer.arg(i).c_str());
       }
     }
 
@@ -575,8 +662,9 @@ void setupWeb() {
     // Configure Controller
     for (int i = 0; i < webServer.args(); i++) {
       if (webServer.argName(i) == "controller_homekit_name") {
-        if (webServer.arg(i).length() <= 19) strcpy(controllerData.homekit_name, webServer.arg(i).c_str());
-        else {success=false; content = "name can be up to 19 chars";}
+        if (webServer.arg(i).length() >= 20) {success=false; content = "name can be up to 19 chars";}
+        else if (!isValidAlphabet(webServer.arg(i))) {success=false; content = "name must be alphabet";}
+        else strcpy(controllerData.homekit_name, webServer.arg(i).c_str());
       }
       if (webServer.argName(i) == "controller_homekit_type") {
         if (webServer.arg(i) == "bridge") {  // Type: Bridge
@@ -593,8 +681,7 @@ void setupWeb() {
         else strcpy(controllerData.homekit_code, webServer.arg(i).c_str());
       }
       if (webServer.argName(i) == "controller_homekit_port") {
-        if (webServer.arg(i).length() <= 2) {success=false; content = "port must more than 2 chars";}
-        else if (webServer.arg(i).length() >= 6) {success=false; content = "port can be up to 5 chars";}
+        if (webServer.arg(i).length() >= 6) {success=false; content = "port can be up to 5 chars";}
         else if (!isValidNumber(webServer.arg(i))) {success=false; content = "port must numeric";}
         else controllerData.homekit_port = webServer.arg(i).toInt();
       }
@@ -650,8 +737,8 @@ void setupWeb() {
 
 // HELPER Controller
 void statusUpdate(HS_STATUS status) {
-  controllerData.status = homeSpan.statusString(status);
-  logEntry(controllerData.homekit_name,(char*)controllerData.homekit_serialnumber,controllerData.status);
+  status_global = homeSpan.statusString(status);
+  logEntry(controllerData.homekit_name, logKind::STATE, String(status_global));
 }
 void unpairController() {
   homeSpan.processSerialCommand("U");  // unpair device by deleting all Controller data
@@ -707,9 +794,12 @@ void resetDevice(int position) {
   deviceData[position].bool_1 = false;
   deviceData[position].float_1 = 0.0;
   deviceData[position].float_2 = 0.0;
-  strcpy(deviceData[position].state_text, "none"); 
+  strcpy(deviceData[position].state_1_value, ""); 
+  strcpy(deviceData[position].state_1_unit, ""); 
+  strcpy(deviceData[position].state_2_value, ""); 
+  strcpy(deviceData[position].state_2_unit, ""); 
   deviceData[position].state_marked = false;
-  strcpy(deviceData[position].error_last, "");
+  deviceData[position].error_last = "";
   deviceData[position].restartrequired = false;
 }
 void resetAllDevices() {
@@ -752,9 +842,38 @@ void startAccessPoint() {
 // HELPER input
 boolean isValidNumber(String str){
   for(byte i=0;i<str.length();i++) {
-    if(isDigit(str.charAt(i))) return true;
+    if(!isDigit(str.charAt(i))) return false;
   }
-  return false;
+  return true;
+}
+boolean isValidAlphabet(String str){
+  const char *allowed = "01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ ";
+  for(byte i=0;i<str.length();i++) {
+    if (!strchr(allowed, str.charAt(i))) return false;
+  }
+  return true;
+}
+boolean isValidIpAddress(String str){
+  const char *allowed = "01234567890.";
+  for(byte i=0;i<str.length();i++) {
+    if (!strchr(allowed, str.charAt(i))) return false;
+  }
+  return true;
+}
+// HELPER char mod
+char* removeSpaces(char* input)                                         
+{
+    int i,j;
+    char *output=input;
+    for (i = 0, j = 0; i<strlen(input); i++,j++)          
+    {
+        if (input[i]!=' ')                           
+            output[j]=input[i];                     
+        else
+            j--;                                     
+    }
+    output[j]=0;
+    return output;
 }
 // HELPER Mdns suffix
 const char *const alphabets = "aeiouybcdfghjklmnpqrstvwxza";
@@ -775,3 +894,48 @@ void generateMdnsHostNameSuffix() {
     writeToNVS();
   }
 }
+// HELPER MQTT
+void processMQTT() {
+  // Get status
+  if (mqtt_client.connected()) status_mqtt_connected = true;
+  else status_mqtt_connected = false;
+  // Send MQTT
+  if (controllerData.mqtt_active) { // Wenn active
+    for (int i = aLogging - 1; i >= 0; i--) {
+      if (!actionLogging[i].mqtt_send) {
+        // WLAN connected?
+        if (WiFi.status() == WL_CONNECTED) {
+          mqtt_client.setServer(controllerData.mqtt_server, controllerData.mqtt_port);
+          // MQTT connected?
+          while (!mqtt_client.connected() && controllerData.mqtt_active) {
+            Serial.println("MQTT connecting...");
+            if (mqtt_client.connect("ESP32Client", controllerData.mqtt_user, controllerData.mqtt_password )) {
+              LOG1("MQTT connected \n");
+              status_mqtt_connected = true;
+            } else {
+              LOG1("MQTT connect failed: " + String(mqtt_client.state()) + " \n");
+              logEntry(controllerData.homekit_name, logKind::ERROR, "MQTT connect failed: " + String(mqtt_client.state()));
+              status_mqtt_connected = false;
+              controllerData.mqtt_active = false; // Abort MQTT, set to inactive
+            }
+          }
+          char devicename[55];
+          strcpy(devicename, controllerData.homekit_name);
+          strcat(devicename, "/");
+          strcat(devicename, actionLogging[i].name);
+          strcat(devicename, "/");
+          strcat(devicename, logKindStr[actionLogging[i].kind]);
+          // Send value
+          mqtt_client.publish(removeSpaces(devicename), String(actionLogging[i].value).c_str());
+          // Send unit, if not empty
+          if (strcmp(actionLogging[i].unit, "") != 0) {
+            strcat(devicename, "_unit");
+            mqtt_client.publish(removeSpaces(devicename), String(actionLogging[i].unit).c_str());
+          }
+          actionLogging[i].mqtt_send = true;
+        }
+      }
+    }    
+  }
+}
+

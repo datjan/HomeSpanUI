@@ -3,27 +3,9 @@
 // Classes
 class_ledmatrix *ledMatrix;
 // Log
-enum logKind {INIT, CHANGES, ERROR};
-void logDevice(uint8_t device_id, logKind log_kind, char message[31] = "") {
-  switch (log_kind)
-  {
-    case INIT: {
-      LOG1(String(deviceData[device_id].name) + " (" + String(deviceData[device_id].type.code) + " " + deviceData[device_id].homekitid + ") -> Init: " + deviceData[device_id].state_text + "\n");
-      logEntry(deviceData[device_id].name,deviceData[device_id].homekitid,"init"); 
-      break;
-    }
-    case CHANGES: {
-      LOG1(String(deviceData[device_id].name) + " (" + String(deviceData[device_id].type.code) + " " + deviceData[device_id].homekitid + ") -> Change: " + deviceData[device_id].state_text + "\n");
-      logEntry(deviceData[device_id].name,deviceData[device_id].homekitid,"changed to " + String(deviceData[device_id].state_text)); 
-      break;
-    }
-    case ERROR: { 
-      strcpy(deviceData[device_id].error_last, message); 
-      LOG1(String(deviceData[device_id].name) + " (" + String(deviceData[device_id].type.code) + " " + deviceData[device_id].homekitid + ") -> Error: " + message + "\n");
-      logEntry(deviceData[device_id].name,deviceData[device_id].homekitid,message); 
-      break;
-    }
-  }
+void logDevice(uint8_t device_id, logKind log_kind, String value = "", char unit[4] = "") {
+  LOG1(String(deviceData[device_id].name) + " (" + String(deviceData[device_id].type.code) + ") -> " + String(logKindStr[log_kind]) + ": " + value + "\n");
+  logEntry(deviceData[device_id].name, log_kind, value, unit);
 }
 
 // Device: Accessory Information
@@ -88,16 +70,10 @@ struct deviceGenericLED : Service::LightBulb {       // Generic LED
     // Init state
     this->LED=new LedPin(deviceData[this->deviceid].pin_1);      // configures a PWM LED for output to pin number "ledPin"
     LED->set(power->getVal()*(deviceData[this->deviceid].bool_1?(level->getVal()):100));             // set the LED to its initial state at startup.
-    float poweron = 0;
-    float brightness = 100;
-    if (this->poweron) strcpy(deviceData[this->deviceid].state_text, "on ");
-    else  strcpy(deviceData[this->deviceid].state_text, "off ");
-    if (deviceData[this->deviceid].bool_1) strcat(deviceData[this->deviceid].state_text, String(this->brightness).c_str());
-    if (this->poweron) deviceData[this->deviceid].state_marked = true;
-    else deviceData[this->deviceid].state_marked = false;
-    // Init Log
-    logDevice(this->deviceid,logKind::INIT);
+    logDevice(this->deviceid,logKind::INIT,"pin " + String(deviceData[this->deviceid].pin_1));
     this->initsuccess = true;
+    // Device state
+    update();
   } // end constructor
 
   boolean update(){                              // update() method
@@ -110,13 +86,17 @@ struct deviceGenericLED : Service::LightBulb {       // Generic LED
     // Set state
     LED->set(power->getNewVal()*(deviceData[this->deviceid].bool_1?(level->getNewVal()):100));       // update the physical LED to reflect the new values 
     // Device state
-    if (this->poweron) strcpy(deviceData[this->deviceid].state_text, "on ");
-    else  strcpy(deviceData[this->deviceid].state_text, "off ");
-    if (deviceData[this->deviceid].bool_1) strcat(deviceData[this->deviceid].state_text, String(this->brightness).c_str());
+    if (this->poweron) strcpy(deviceData[this->deviceid].state_1_value, "on");
+    else strcpy(deviceData[this->deviceid].state_1_value, "off");
+    if(deviceData[this->deviceid].bool_1) {
+      strcpy(deviceData[this->deviceid].state_2_value, String(this->brightness).c_str());
+      strcpy(deviceData[this->deviceid].state_2_unit, "%");
+    }
     if (this->poweron) deviceData[this->deviceid].state_marked = true;
     else deviceData[this->deviceid].state_marked = false;
     // Log
-    logDevice(this->deviceid,logKind::CHANGES); 
+    logDevice(this->deviceid,logKind::STATE,String(deviceData[this->deviceid].state_1_value),deviceData[this->deviceid].state_1_unit); 
+    if(deviceData[this->deviceid].bool_1) logDevice(this->deviceid,logKind::BRIGHT,String(deviceData[this->deviceid].state_2_value),deviceData[this->deviceid].state_2_unit);
     return(true);                               // return true 
   } // update
 
@@ -152,14 +132,10 @@ struct deviceRgbLED : Service::LightBulb {       // RGB LED (Command Cathode)
     this->bluePin=new LedPin(deviceData[this->deviceid].pin_3);      // configures a PWM LED for output to the BLUE pin
     float poweron = 0;
     this->state_rgb = "(0,0,0)";
-    if (this->poweron) strcpy(deviceData[this->deviceid].state_text, "on ");
-    else  strcpy(deviceData[this->deviceid].state_text, "off ");
-    strcat(deviceData[this->deviceid].state_text, String(this->state_rgb).c_str());
-    if (this->poweron) deviceData[this->deviceid].state_marked = true;
-    else deviceData[this->deviceid].state_marked = false;
     // Init Log
-    logDevice(this->deviceid,logKind::INIT);
+    logDevice(this->deviceid,logKind::INIT,"pin " + String(deviceData[this->deviceid].pin_1) + "/" + String(deviceData[this->deviceid].pin_2) + "/" + String(deviceData[this->deviceid].pin_3));
     this->initsuccess = true;
+    update();
   } // end constructor
 
   boolean update(){                         // update() method
@@ -188,13 +164,14 @@ struct deviceRgbLED : Service::LightBulb {       // RGB LED (Command Cathode)
     greenPin->set(G);    
     bluePin->set(B);    
     // Device state
-    if (this->poweron) strcpy(deviceData[this->deviceid].state_text, "on ");
-    else  strcpy(deviceData[this->deviceid].state_text, "off ");
-    strcat(deviceData[this->deviceid].state_text, String(this->state_rgb).c_str());
+    if (this->poweron) strcpy(deviceData[this->deviceid].state_1_value, "on");
+    else strcpy(deviceData[this->deviceid].state_1_value, "off");
+    strcpy(deviceData[this->deviceid].state_2_value, this->state_rgb.c_str());
     if (this->poweron) deviceData[this->deviceid].state_marked = true;
     else deviceData[this->deviceid].state_marked = false;
     // Log
-    logDevice(this->deviceid,logKind::CHANGES);
+    logDevice(this->deviceid,logKind::STATE,String(deviceData[this->deviceid].state_1_value),deviceData[this->deviceid].state_1_unit);
+    logDevice(this->deviceid,logKind::BRIGHT,String(deviceData[this->deviceid].state_2_value),deviceData[this->deviceid].state_2_unit);
     return(true);                               // return true 
   } // update
 };
@@ -213,16 +190,18 @@ struct deviceMax7219LED : Service::LightBulb {       // Generic LED
     this->deviceid = sDeviceid;
     this->accessory_num = sAccessoryNum;
 
-    if (this->accessory_num==0) new Characteristic::Name("Sym 1");
-    if (this->accessory_num==1) new Characteristic::Name("Sym 2");
-    if (this->accessory_num==2) new Characteristic::Name("Sym 3");
-    if (this->accessory_num==3) new Characteristic::Name("Off");
+    if (this->accessory_num==0) new Characteristic::Name("sym1");
+    if (this->accessory_num==1) new Characteristic::Name("sym2");
+    if (this->accessory_num==2) new Characteristic::Name("sym3");
+    if (this->accessory_num==3) new Characteristic::Name("off");
     power=new Characteristic::On();           // no parameter, no NVS storage
     // Init state
-    strcpy(deviceData[this->deviceid].state_text, "Off");
+    strcpy(deviceData[this->deviceid].state_1_value, "off");
+    strcpy(deviceData[this->deviceid].state_1_unit, "");
     deviceData[this->deviceid].state_marked = false;
     // Init Log
-    logDevice(this->deviceid,logKind::INIT);
+    logDevice(this->deviceid,logKind::INIT,"pin " + String(deviceData[this->deviceid].pin_1));
+    logDevice(this->deviceid,logKind::STATE,String(deviceData[this->deviceid].state_1_value),deviceData[this->deviceid].state_1_unit);   
     this->initsuccess = true;
   } // end constructor
 
@@ -233,16 +212,16 @@ struct deviceMax7219LED : Service::LightBulb {       // Generic LED
       // Set state
       setMatrix();
       // Device state
-      if (this->accessory_num==0) strcpy(deviceData[this->deviceid].state_text, "Sym1");
-      if (this->accessory_num==1) strcpy(deviceData[this->deviceid].state_text, "Sym2");
-      if (this->accessory_num==2) strcpy(deviceData[this->deviceid].state_text, "Sym3");
-      if (this->accessory_num==3) strcpy(deviceData[this->deviceid].state_text, "Off");
+      if (this->accessory_num==0) strcpy(deviceData[this->deviceid].state_1_value, "sym1");
+      if (this->accessory_num==1) strcpy(deviceData[this->deviceid].state_1_value, "sym2");
+      if (this->accessory_num==2) strcpy(deviceData[this->deviceid].state_1_value, "sym3");
+      if (this->accessory_num==3) strcpy(deviceData[this->deviceid].state_1_value, "off");
       if (this->accessory_num==0) deviceData[this->deviceid].state_marked = true;
       if (this->accessory_num==1) deviceData[this->deviceid].state_marked = true;
       if (this->accessory_num==2) deviceData[this->deviceid].state_marked = true;
       if (this->accessory_num==3) deviceData[this->deviceid].state_marked = false;
       // Log
-      logDevice(this->deviceid,logKind::CHANGES);      
+      logDevice(this->deviceid,logKind::STATE,String(deviceData[this->deviceid].state_1_value),deviceData[this->deviceid].state_1_unit);      
     }
     return(true);                               // return true 
   } // update
@@ -318,10 +297,10 @@ struct deviceProgButton : Service::StatelessProgrammableSwitch {       // Statel
     new Characteristic::ServiceLabelIndex(index);               // set service label index (only required if there is more than one Stateless Programmable Switch per Service)
     // Init State
     new SpanButton(deviceData[this->deviceid].pin_1);                                  // create new SpanButton
-    strcpy(deviceData[this->deviceid].state_text, "waiting for press"); 
-    deviceData[this->deviceid].state_marked = false;
+    strcpy(deviceData[this->deviceid].state_1_value, "waiting");
     // Init Log
-    logDevice(this->deviceid,logKind::INIT); 
+    logDevice(this->deviceid,logKind::INIT,"pin " + String(deviceData[this->deviceid].pin_1)); 
+    logDevice(this->deviceid,logKind::STATE,String(deviceData[this->deviceid].state_1_value),"");
     this->initsuccess = true;
   } // end constructor
 
@@ -329,13 +308,15 @@ struct deviceProgButton : Service::StatelessProgrammableSwitch {       // Statel
     // Set state
     switchEvent->setVal(pressType);                // set the value of the switchEvent Characteristic
     // Device State
-    if (pressType==0) { strcpy(deviceData[this->deviceid].state_text, "single press"); }
-    if (pressType==1) { strcpy(deviceData[this->deviceid].state_text, "double press"); }
-    if (pressType==2) { strcpy(deviceData[this->deviceid].state_text, "long press"); }
+    if (pressType==0) { strcpy(deviceData[this->deviceid].state_1_value, "s.press"); }
+    if (pressType==1) { strcpy(deviceData[this->deviceid].state_1_value, "d.press"); }
+    if (pressType==2) { strcpy(deviceData[this->deviceid].state_1_value, "l.press"); }
     // Log
-    logDevice(this->deviceid,logKind::CHANGES);
+    logDevice(this->deviceid,logKind::STATE,String(deviceData[this->deviceid].state_1_value),"");
     // Reset State
-    strcpy(deviceData[this->deviceid].state_text, "waiting for press"); 
+    strcpy(deviceData[this->deviceid].state_1_value, "waiting"); 
+    // Log
+    logDevice(this->deviceid,logKind::STATE,String(deviceData[this->deviceid].state_1_value),"");
   }
 };
 // Device: DoorBell (ok)
@@ -355,10 +336,11 @@ struct deviceDoorBell : Service::Doorbell {  // A DoorBell
     new Characteristic::ServiceLabelIndex(sIndex);               // set service label index (only required if there is more than one Stateless Programmable Switch per Service)
     // Init State
     new SpanButton(deviceData[this->deviceid].pin_1);                                  // create new SpanButton
-    strcpy(deviceData[this->deviceid].state_text, "waiting for press"); 
+    strcpy(deviceData[this->deviceid].state_1_value, "waiting"); 
     deviceData[this->deviceid].state_marked = false;
     // Init Log
-    logDevice(this->deviceid,logKind::INIT);
+    logDevice(this->deviceid,logKind::INIT,"pin " + String(deviceData[this->deviceid].pin_1)); 
+    logDevice(this->deviceid,logKind::STATE,String(deviceData[this->deviceid].state_1_value),"");
     this->initsuccess = true;
   } // end constructor
 
@@ -366,13 +348,15 @@ struct deviceDoorBell : Service::Doorbell {  // A DoorBell
     // Set state
     switchEvent->setVal(pressType);                // set the value of the switchEvent Characteristic
     // Device State
-    if (pressType==0) { strcpy(deviceData[this->deviceid].state_text, "single press"); }
-    if (pressType==1) { strcpy(deviceData[this->deviceid].state_text, "double press"); }
-    if (pressType==2) { strcpy(deviceData[this->deviceid].state_text, "long press"); }
+    if (pressType==0) { strcpy(deviceData[this->deviceid].state_1_value, "s.press"); }
+    if (pressType==1) { strcpy(deviceData[this->deviceid].state_1_value, "d.press"); }
+    if (pressType==2) { strcpy(deviceData[this->deviceid].state_1_value, "l.press"); }
     // Log
-    logDevice(this->deviceid,logKind::CHANGES);
+    logDevice(this->deviceid,logKind::STATE,String(deviceData[this->deviceid].state_1_value),"");
     // Reset State
-    strcpy(deviceData[this->deviceid].state_text, "waiting for press"); 
+    strcpy(deviceData[this->deviceid].state_1_value, "waiting"); 
+    // Log
+    logDevice(this->deviceid,logKind::STATE,String(deviceData[this->deviceid].state_1_value),"");
   }
 };
 // ############ CONTACT SENSORS
@@ -397,10 +381,11 @@ struct deviceContactSensor : Service::ContactSensor {     // A ContactSensor
     // Init State
     pinMode(deviceData[this->deviceid].pin_1, INPUT_PULLDOWN); // Default state LOW
     this->opencontact = false;
-    strcpy(deviceData[this->deviceid].state_text, "closed"); 
+    strcpy(deviceData[this->deviceid].state_1_value, "closed"); 
     deviceData[this->deviceid].state_marked = false;
     // Init Log
-    logDevice(this->deviceid,logKind::INIT);
+    logDevice(this->deviceid,logKind::INIT,"pin " + String(deviceData[this->deviceid].pin_1));
+    logDevice(this->deviceid,logKind::STATE,String(deviceData[this->deviceid].state_1_value),"");
     this->initsuccess = true;
   } // end constructor
 
@@ -422,10 +407,10 @@ struct deviceContactSensor : Service::ContactSensor {     // A ContactSensor
       contact->setVal(this->opencontact); // Set new homekit state 1 = open - 0 = closed
       this->opencontact_old = this->opencontact;
       // Device State
-      if (this->opencontact) { strcpy(deviceData[this->deviceid].state_text, "open"); deviceData[this->deviceid].state_marked = true; }
-      else { strcpy(deviceData[this->deviceid].state_text, "closed"); deviceData[this->deviceid].state_marked = false; }
+      if (this->opencontact) { strcpy(deviceData[this->deviceid].state_1_value, "open"); deviceData[this->deviceid].state_marked = true; }
+      else { strcpy(deviceData[this->deviceid].state_1_value, "closed"); deviceData[this->deviceid].state_marked = false; }
       // Log
-      logDevice(this->deviceid,logKind::CHANGES);
+      logDevice(this->deviceid,logKind::STATE,String(deviceData[this->deviceid].state_1_value),"");
     }
   }  //getContact()
 };
@@ -455,10 +440,11 @@ struct deviceSecuritySystem : Service::SecuritySystem {     // A Security System
       pinMode(deviceData[this->deviceid].pin_1, INPUT_PULLDOWN); // Contact Default state LOW
       pinMode(deviceData[this->deviceid].pin_2, INPUT_PULLDOWN); // Armed Default state LOW
       this->securitystate = 3;
-      strcpy(deviceData[this->deviceid].state_text, "disarmed"); 
+      strcpy(deviceData[this->deviceid].state_1_value, "disarmed"); 
       deviceData[this->deviceid].state_marked = false;
       // Init Log
-      logDevice(this->deviceid,logKind::INIT);
+      logDevice(this->deviceid,logKind::INIT,"pin " + String(deviceData[this->deviceid].pin_1) + "/" + String(deviceData[this->deviceid].pin_2));
+      logDevice(this->deviceid,logKind::STATE,String(deviceData[this->deviceid].state_1_value),"");
       this->initsuccess = true;
     }
     else if (strcmp(deviceData[this->deviceid].type.code, "terxon") == 0) {
@@ -470,10 +456,11 @@ struct deviceSecuritySystem : Service::SecuritySystem {     // A Security System
       pinMode(deviceData[this->deviceid].pin_3, INPUT_PULLDOWN); // Night Default state LOW
       pinMode(deviceData[this->deviceid].pin_4, INPUT_PULLDOWN); // Stay Default state LOW
       this->securitystate = 3;
-      strcpy(deviceData[this->deviceid].state_text, "disarmed"); 
+      strcpy(deviceData[this->deviceid].state_1_value, "disarmed"); 
       deviceData[this->deviceid].state_marked = false;
       // Init Log
-      logDevice(this->deviceid,logKind::INIT);
+      logDevice(this->deviceid,logKind::INIT,"pin " + String(deviceData[this->deviceid].pin_1) + "/" + String(deviceData[this->deviceid].pin_2) + "/" + String(deviceData[this->deviceid].pin_3) + "/" + String(deviceData[this->deviceid].pin_4));
+      logDevice(this->deviceid,logKind::STATE,String(deviceData[this->deviceid].state_1_value),"");
       this->initsuccess = true;
     }
   } // end constructor
@@ -508,18 +495,18 @@ struct deviceSecuritySystem : Service::SecuritySystem {     // A Security System
       else { target->setVal(this->securitystate); delay(200); current->setVal(this->securitystate); }   // If state normal
       this->securitystate_old = this->securitystate;
       // Device State
-      if (this->securitystate==1) { strcpy(deviceData[this->deviceid].state_text, "away"); deviceData[this->deviceid].state_marked = true; }
-      else if (this->securitystate==2) { strcpy(deviceData[this->deviceid].state_text, "night"); deviceData[this->deviceid].state_marked = true; }
-      else if (this->securitystate==3) { strcpy(deviceData[this->deviceid].state_text, "disarmed"); deviceData[this->deviceid].state_marked = false; }
-      else if (this->securitystate==4) { strcpy(deviceData[this->deviceid].state_text, "triggered"); deviceData[this->deviceid].state_marked = true; }
-      else { strcpy(deviceData[this->deviceid].state_text, "stay"); deviceData[this->deviceid].state_marked = false; }
+      if (this->securitystate==1) { strcpy(deviceData[this->deviceid].state_1_value, "away"); deviceData[this->deviceid].state_marked = true; }
+      else if (this->securitystate==2) { strcpy(deviceData[this->deviceid].state_1_value, "night"); deviceData[this->deviceid].state_marked = true; }
+      else if (this->securitystate==3) { strcpy(deviceData[this->deviceid].state_1_value, "disarmed"); deviceData[this->deviceid].state_marked = false; }
+      else if (this->securitystate==4) { strcpy(deviceData[this->deviceid].state_1_value, "triggered"); deviceData[this->deviceid].state_marked = true; }
+      else { strcpy(deviceData[this->deviceid].state_1_value, "stay"); deviceData[this->deviceid].state_marked = false; }
       // Log
-      logDevice(this->deviceid,logKind::CHANGES);
+      logDevice(this->deviceid,logKind::STATE,String(deviceData[this->deviceid].state_1_value),"");
     } 
   }
 };
 // ############ DYNAMIC SENSORS
-// Device: Temperature Sensor (not tested)
+// Device: Temperature Sensor (ok)
 struct deviceTemperatureSensor : Service::TemperatureSensor {      // A Temperature sensor 
 
   // Settings
@@ -550,12 +537,8 @@ struct deviceTemperatureSensor : Service::TemperatureSensor {      // A Temperat
       oneWirePtr =  new OneWire(deviceData[this->deviceid].pin_1);
       sensorsDallas = new DallasTemperature(oneWirePtr);
       sensorsDallas->begin();
-      strcpy(deviceData[this->deviceid].state_text, String(this->temperature).c_str());
-      if (deviceData[this->deviceid].bool_1) strcat(deviceData[this->deviceid].state_text, " C");
-      else strcat(deviceData[this->deviceid].state_text, " F");
-      deviceData[this->deviceid].state_marked = false;
       // Init Log
-      logDevice(this->deviceid,logKind::INIT);
+      logDevice(this->deviceid,logKind::INIT,"pin " + String(deviceData[this->deviceid].pin_1));
       this->initsuccess = true;
     }
     else if (strcmp(deviceData[this->deviceid].type.code, "dht11") == 0) { // Init DHT Pointers
@@ -567,15 +550,8 @@ struct deviceTemperatureSensor : Service::TemperatureSensor {      // A Temperat
       #define DHTTYPE DHT11
       sensorsDht = new DHT(deviceData[this->deviceid].pin_1, DHTTYPE);
       sensorsDht->begin(); 
-      strcpy(deviceData[this->deviceid].state_text, String(this->temperature).c_str());
-      if (deviceData[this->deviceid].bool_1) strcat(deviceData[this->deviceid].state_text, " C");
-      else strcat(deviceData[this->deviceid].state_text, " F");
-      strcat(deviceData[this->deviceid].state_text, " - ");
-      strcat(deviceData[this->deviceid].state_text, String(this->humidity).c_str());
-      strcat(deviceData[this->deviceid].state_text, " %");
-      deviceData[this->deviceid].state_marked = false;
       // Init Log
-      logDevice(this->deviceid,logKind::INIT);
+      logDevice(this->deviceid,logKind::INIT,"pin " + String(deviceData[this->deviceid].pin_1));
       this->initsuccess = true;
     }
     else if (strcmp(deviceData[this->deviceid].type.code, "dht22") == 0) { // Init DHT Pointers
@@ -587,15 +563,8 @@ struct deviceTemperatureSensor : Service::TemperatureSensor {      // A Temperat
       #define DHTTYPE DHT22
       sensorsDht = new DHT(deviceData[this->deviceid].pin_1, DHTTYPE);
       sensorsDht->begin(); 
-      strcpy(deviceData[this->deviceid].state_text, String(this->temperature).c_str());
-      if (deviceData[this->deviceid].bool_1) strcat(deviceData[this->deviceid].state_text, " C");
-      else strcat(deviceData[this->deviceid].state_text, " F");
-      strcat(deviceData[this->deviceid].state_text, " - ");
-      strcat(deviceData[this->deviceid].state_text, String(this->humidity).c_str());
-      strcat(deviceData[this->deviceid].state_text, " %");
-      deviceData[this->deviceid].state_marked = false;
       // Init Log
-      logDevice(this->deviceid,logKind::INIT);
+      logDevice(this->deviceid,logKind::INIT,"pin " + String(deviceData[this->deviceid].pin_1));
       this->initsuccess = true;
     }
   } 
@@ -613,6 +582,7 @@ struct deviceTemperatureSensor : Service::TemperatureSensor {      // A Temperat
       sensorsDallas->requestTemperatures();
       if (deviceData[this->deviceid].bool_1) this->temperature = sensorsDallas->getTempCByIndex(0) + deviceData[this->deviceid].float_1;// Celsius
       else this->temperature = sensorsDallas->getTempFByIndex(0) + deviceData[this->deviceid].float_1;// Fahrenheit
+      // Error handling
       if (this->temperature<=-50) { this->temperature = -50; logDevice(this->deviceid,logKind::ERROR,"error temperature value"); }
       if (isnan(this->temperature)) { this->temperature = 0; logDevice(this->deviceid,logKind::ERROR,"error reading temperature"); }
     }
@@ -620,6 +590,7 @@ struct deviceTemperatureSensor : Service::TemperatureSensor {      // A Temperat
       if (deviceData[this->deviceid].bool_1) this->temperature = sensorsDht->readTemperature() + deviceData[this->deviceid].float_1;   // Celsius
       else this->temperature = sensorsDht->readTemperature(true) + deviceData[this->deviceid].float_1;   // Fahrenheit
       this->humidity = sensorsDht->readHumidity() + deviceData[this->deviceid].float_2; 
+      // Error handling
       if (this->temperature<=-50) { this->temperature = -50; logDevice(this->deviceid,logKind::ERROR,"error temperature value"); }
       if (this->humidity<=0) { this->humidity = 0; logDevice(this->deviceid,logKind::ERROR,"error humidity value"); }
       if (isnan(this->temperature)) { this->temperature = 0; logDevice(this->deviceid,logKind::ERROR,"error reading temperature"); }
@@ -635,25 +606,30 @@ struct deviceTemperatureSensor : Service::TemperatureSensor {      // A Temperat
     }
     // Device state
     if (strcmp(deviceData[this->deviceid].type.code, "ds18b20") == 0) {
-      strcpy(deviceData[this->deviceid].state_text, String(this->temperature).c_str());
-      if (deviceData[this->deviceid].bool_1) strcat(deviceData[this->deviceid].state_text, " C");
-      else strcat(deviceData[this->deviceid].state_text, " F");
+      strcpy(deviceData[this->deviceid].state_1_value, String(this->temperature).c_str());
+      if (deviceData[this->deviceid].bool_1) strcpy(deviceData[this->deviceid].state_1_unit, "C");
+      else strcpy(deviceData[this->deviceid].state_1_unit, "F");
       deviceData[this->deviceid].state_marked = false;
     }
     else if (strcmp(deviceData[this->deviceid].type.code, "dht11") == 0 || strcmp(deviceData[this->deviceid].type.code, "dht22") == 0) {
-      strcpy(deviceData[this->deviceid].state_text, String(this->temperature).c_str());
-      if (deviceData[this->deviceid].bool_1) strcat(deviceData[this->deviceid].state_text, " C");
-      else strcat(deviceData[this->deviceid].state_text, " F");
-      strcat(deviceData[this->deviceid].state_text, " - ");
-      strcat(deviceData[this->deviceid].state_text, String(this->humidity).c_str());
-      strcat(deviceData[this->deviceid].state_text, " %");
+      strcpy(deviceData[this->deviceid].state_1_value, String(this->temperature).c_str());
+      if (deviceData[this->deviceid].bool_1) strcpy(deviceData[this->deviceid].state_1_unit, "C");
+      else strcpy(deviceData[this->deviceid].state_1_unit, "F");
+      strcpy(deviceData[this->deviceid].state_2_value, String(this->humidity).c_str());
+      strcpy(deviceData[this->deviceid].state_2_unit, "%");
       deviceData[this->deviceid].state_marked = false;
     }
     // Log
-    logDevice(this->deviceid,logKind::CHANGES);
+    if (strcmp(deviceData[this->deviceid].type.code, "ds18b20") == 0) {
+      logDevice(this->deviceid, logKind::TEMP, String(deviceData[this->deviceid].state_1_value), deviceData[this->deviceid].state_1_unit);
+    }
+    else if (strcmp(deviceData[this->deviceid].type.code, "dht11") == 0 || strcmp(deviceData[this->deviceid].type.code, "dht22") == 0) {
+      logDevice(this->deviceid, logKind::TEMP, String(deviceData[this->deviceid].state_1_value), deviceData[this->deviceid].state_1_unit);
+      logDevice(this->deviceid, logKind::HUM, String(deviceData[this->deviceid].state_2_value), deviceData[this->deviceid].state_2_unit);
+    }
   }  //getTemp()
 };
-// Device: Humidity Sensor (not used and not tested)
+// Device: Humidity Sensor (ok)
 struct deviceHumiditySensor : Service::HumiditySensor {      // A Humidity sensor 
 
   // Settings
@@ -680,11 +656,8 @@ struct deviceHumiditySensor : Service::HumiditySensor {      // A Humidity senso
       sensorsDht = new DHT(deviceData[this->deviceid].pin_1, DHTTYPE);
       sensorsDht->begin(); 
       this->humidity = 0;
-      strcpy(deviceData[this->deviceid].state_text, String(this->humidity).c_str());
-      strcat(deviceData[this->deviceid].state_text, " %");
-      deviceData[this->deviceid].state_marked = false;
       // Init Log
-      logDevice(this->deviceid,logKind::INIT);
+      logDevice(this->deviceid,logKind::INIT,"pin " + String(deviceData[this->deviceid].pin_1));
       this->initsuccess = true;
     }
     else if (strcmp(deviceData[this->deviceid].type.code, "dht22") == 0) { // Init DHT Pointers
@@ -694,12 +667,8 @@ struct deviceHumiditySensor : Service::HumiditySensor {      // A Humidity senso
       #define DHTTYPE DHT22
       sensorsDht = new DHT(deviceData[this->deviceid].pin_1, DHTTYPE);
       sensorsDht->begin(); 
-      this->humidity = 0;
-      strcpy(deviceData[this->deviceid].state_text, String(this->humidity).c_str());
-      strcat(deviceData[this->deviceid].state_text, " %");
-      deviceData[this->deviceid].state_marked = false;
       // Init Log
-      logDevice(this->deviceid,logKind::INIT);
+      logDevice(this->deviceid,logKind::INIT,"pin " + String(deviceData[this->deviceid].pin_1));
       this->initsuccess = true;
     }
   } 
@@ -720,11 +689,11 @@ struct deviceHumiditySensor : Service::HumiditySensor {      // A Humidity senso
     if (isnan(this->humidity)) { this->humidity = 0; logDevice(this->deviceid,logKind::ERROR,"error reading humidity"); }
     // Set state
     hum->setVal(this->humidity); 
-    strcpy(deviceData[this->deviceid].state_text, String(this->humidity).c_str());
-    strcat(deviceData[this->deviceid].state_text, " %");
+    strcpy(deviceData[this->deviceid].state_1_value, String(this->humidity).c_str());
+    strcpy(deviceData[this->deviceid].state_1_unit, " %");
     deviceData[this->deviceid].state_marked = false;
     // Log
-    logDevice(this->deviceid,logKind::CHANGES); 
+    logDevice(this->deviceid, logKind::HUM, String(deviceData[this->deviceid].state_1_value), deviceData[this->deviceid].state_1_unit);
   }  //getHumidity()
 };
 // Device: Light Sensor (ok)
@@ -751,12 +720,8 @@ struct deviceLightSensor : Service::LightSensor {      // A Light sensor
       light->setRange(0.001, 10000);    // expand the range 
       // Init State
       lightMeter.begin();  // I2C needed to be intialized before!!!! (done during setup)
-      this->lightlevel = 0;
-      strcpy(deviceData[this->deviceid].state_text, String(this->lightlevel).c_str());
-      strcat(deviceData[this->deviceid].state_text, " lx");
-      deviceData[this->deviceid].state_marked = false;
       // Init Log
-      logDevice(this->deviceid,logKind::INIT);
+      logDevice(this->deviceid,logKind::INIT,"i2c");
       this->initsuccess = true;
     }
     else if (strcmp(deviceData[this->deviceid].type.code, "temt6000") == 0) { // Init Pointers
@@ -764,12 +729,8 @@ struct deviceLightSensor : Service::LightSensor {      // A Light sensor
       light->setRange(0.001, 10000);    // expand the range 
       // Init State
       pinMode(deviceData[this->deviceid].pin_1, INPUT); // ADC1 pin needed
-      this->lightlevel = 0;
-      strcpy(deviceData[this->deviceid].state_text, String(this->lightlevel).c_str());
-      strcat(deviceData[this->deviceid].state_text, " lx");
-      deviceData[this->deviceid].state_marked = false;
       // Init Log
-      logDevice(this->deviceid,logKind::INIT);
+      logDevice(this->deviceid,logKind::INIT,"pin " + String(deviceData[this->deviceid].pin_1));
       this->initsuccess = true;
     }
   } // end constructo
@@ -794,20 +755,20 @@ struct deviceLightSensor : Service::LightSensor {      // A Light sensor
       float lux = microamps * 2.0; // Convert to Lux */
       this->lightlevel = lux + deviceData[this->deviceid].float_1;  
     }
-    if (this->lightlevel<=0.001) { this->lightlevel = 0.001; logDevice(this->deviceid,logKind::ERROR,"error lightlevel value"); }
+    if (this->lightlevel<=0.001) { this->lightlevel = 0.001; }
     if (isnan(this->lightlevel)) { this->lightlevel = 0.001; logDevice(this->deviceid,logKind::ERROR,"error reading lightlevel"); }
     // Set state
     light->setVal(this->lightlevel);     
     // Device State
-    strcpy(deviceData[this->deviceid].state_text, String(this->lightlevel).c_str());
-    strcat(deviceData[this->deviceid].state_text, " lx");
+    strcpy(deviceData[this->deviceid].state_1_value, String(this->lightlevel).c_str());
+    strcpy(deviceData[this->deviceid].state_1_unit, " lx");
     deviceData[this->deviceid].state_marked = false; 
     // Log
-    logDevice(this->deviceid,logKind::CHANGES); 
+    logDevice(this->deviceid, logKind::LUX, String(deviceData[this->deviceid].state_1_value), deviceData[this->deviceid].state_1_unit);
   }  //getLightLevel()
 };
 // ############ BIT SENSORS
-// Device: Leak Sensor (no leak sensor implemented)
+// Device: Leak Sensor (not tested)
 struct deviceLeakSensor : Service::LeakSensor {     // A Leak Sensor
 
   // Settings
@@ -830,10 +791,11 @@ struct deviceLeakSensor : Service::LeakSensor {     // A Leak Sensor
       // Init State
       pinMode(deviceData[this->deviceid].pin_1,INPUT);
       this->isleak = false;
-      strcpy(deviceData[this->deviceid].state_text, "no leak"); 
+      strcpy(deviceData[this->deviceid].state_1_value, "no leak"); 
       deviceData[this->deviceid].state_marked = false;
       // Init Log
-      logDevice(this->deviceid,logKind::INIT); 
+      logDevice(this->deviceid,logKind::INIT,"pin " + String(deviceData[this->deviceid].pin_1));
+      logDevice(this->deviceid,logKind::STATE,String(deviceData[this->deviceid].state_1_value),"");
       this->initsuccess = true;
     }
   } // end constructor
@@ -858,14 +820,14 @@ struct deviceLeakSensor : Service::LeakSensor {     // A Leak Sensor
       // Set Timer
       if (this->isleak) this->waitingtime = deviceData[this->deviceid].float_1; // Extended waiting time after motion detected
       // Device State
-      if (this->isleak) { strcpy(deviceData[this->deviceid].state_text, "leak detected"); deviceData[this->deviceid].state_marked = true; }
-      else { strcpy(deviceData[this->deviceid].state_text, "no leak"); deviceData[this->deviceid].state_marked = false; }
+      if (this->isleak) { strcpy(deviceData[this->deviceid].state_1_value, "leak"); deviceData[this->deviceid].state_marked = true; }
+      else { strcpy(deviceData[this->deviceid].state_1_value, "no leak"); deviceData[this->deviceid].state_marked = false; }
       // Log
-      logDevice(this->deviceid,logKind::CHANGES);
+      logDevice(this->deviceid, logKind::STATE, String(deviceData[this->deviceid].state_1_value), deviceData[this->deviceid].state_1_unit);
     }
   }  //getMotion()
 };
-// Device: Motion Sensor (ok) noch prüfen ob der status in homekit richtig herum ist
+// Device: Motion Sensor (ok)
 struct deviceMotionSensor : Service::MotionSensor {     // A Motion Sensor
 
   // Settings
@@ -888,10 +850,11 @@ struct deviceMotionSensor : Service::MotionSensor {     // A Motion Sensor
       // Init State
       pinMode(deviceData[this->deviceid].pin_1,INPUT);
       this->inmotion = false;
-      strcpy(deviceData[this->deviceid].state_text, "no motion"); 
+      strcpy(deviceData[this->deviceid].state_1_value, "no motion"); 
       deviceData[this->deviceid].state_marked = false;
       // Init Log
-      logDevice(this->deviceid,logKind::INIT);
+      logDevice(this->deviceid,logKind::INIT,"pin " + String(deviceData[this->deviceid].pin_1));
+      logDevice(this->deviceid,logKind::STATE,String(deviceData[this->deviceid].state_1_value),"");
       this->initsuccess = true;
     }
   } // end constructo
@@ -916,14 +879,14 @@ struct deviceMotionSensor : Service::MotionSensor {     // A Motion Sensor
       // Set Timer
       if (this->inmotion) this->waitingtime = deviceData[this->deviceid].float_1; // Extended waiting time after motion detected
       // Device State
-      if (this->inmotion) { strcpy(deviceData[this->deviceid].state_text, "in motion"); deviceData[this->deviceid].state_marked = true; }
-      else { strcpy(deviceData[this->deviceid].state_text, "no motion"); deviceData[this->deviceid].state_marked = false; }
+      if (this->inmotion) { strcpy(deviceData[this->deviceid].state_1_value, "in motion"); deviceData[this->deviceid].state_marked = true; }
+      else { strcpy(deviceData[this->deviceid].state_1_value, "no motion"); deviceData[this->deviceid].state_marked = false; }
       // Log
-      logDevice(this->deviceid,logKind::CHANGES);
+      logDevice(this->deviceid, logKind::STATE, String(deviceData[this->deviceid].state_1_value), deviceData[this->deviceid].state_1_unit);
     }
   }  //getMotion()
 };
-// Device: Smoke Sensor (ok) noch prüfen ob der status in homekit richtig herum ist
+// Device: Smoke Sensor (ok)
 struct deviceSmokeSensor : Service::SmokeSensor {     // A Smoke Sensor
 
   // Settings
@@ -946,10 +909,11 @@ struct deviceSmokeSensor : Service::SmokeSensor {     // A Smoke Sensor
       // Init State
       pinMode(deviceData[this->deviceid].pin_1,INPUT);
       this->issmoke = false;
-      strcpy(deviceData[this->deviceid].state_text, "no smoke"); 
+      strcpy(deviceData[this->deviceid].state_1_value, "no smoke"); 
       deviceData[this->deviceid].state_marked = false;
       // Init Log
-      logDevice(this->deviceid,logKind::INIT);
+      logDevice(this->deviceid,logKind::INIT,"pin " + String(deviceData[this->deviceid].pin_1));
+      logDevice(this->deviceid,logKind::STATE,String(deviceData[this->deviceid].state_1_value),"");
       this->initsuccess = true;
     }
   } // end constructo
@@ -974,10 +938,10 @@ struct deviceSmokeSensor : Service::SmokeSensor {     // A Smoke Sensor
       // Set Timer
       if (this->issmoke) this->waitingtime = deviceData[this->deviceid].float_1; // Extended waiting time after motion detected
       // Device State
-      if (this->issmoke) { strcpy(deviceData[this->deviceid].state_text, "smoke detected"); deviceData[this->deviceid].state_marked = true; }
-      else { strcpy(deviceData[this->deviceid].state_text, "no smoke"); deviceData[this->deviceid].state_marked = false; }
+      if (this->issmoke) { strcpy(deviceData[this->deviceid].state_1_value, "smoke"); deviceData[this->deviceid].state_marked = true; }
+      else { strcpy(deviceData[this->deviceid].state_1_value, "no smoke"); deviceData[this->deviceid].state_marked = false; }
       // Log
-      logDevice(this->deviceid,logKind::CHANGES); 
+      logDevice(this->deviceid, logKind::STATE, String(deviceData[this->deviceid].state_1_value), deviceData[this->deviceid].state_1_unit);
     }
   }  //getSmokes()
 };
@@ -1012,10 +976,10 @@ struct deviceBatteryService : Service::BatteryService {      // A Battery Servic
       this->batterylevel = 100;
       this->ischarging = false;
       this->islow = false;
-      strcpy(deviceData[this->deviceid].state_text, String(this->batterylevel).c_str());
-      strcat(deviceData[this->deviceid].state_text, "%");
-      if (this->ischarging) strcat(deviceData[this->deviceid].state_text, " charge");
-      if (this->islow) strcat(deviceData[this->deviceid].state_text, " low");
+      strcpy(deviceData[this->deviceid].state_1_value, String(this->batterylevel).c_str());
+      strcpy(deviceData[this->deviceid].state_1_unit, "%");
+      //if (this->ischarging) strcat(deviceData[this->deviceid].state_text, " charge");
+      //if (this->islow) strcat(deviceData[this->deviceid].state_text, " low");
       deviceData[this->deviceid].state_marked = false;
       // Init Log
       logDevice(this->deviceid,logKind::INIT);
@@ -1036,14 +1000,14 @@ struct deviceBatteryService : Service::BatteryService {      // A Battery Servic
     charging->setVal(this->ischarging);
     low->setVal(this->islow);  
     // Device State
-    strcpy(deviceData[this->deviceid].state_text, String(this->batterylevel).c_str());
-    strcat(deviceData[this->deviceid].state_text, "%");
-    if (this->ischarging) strcat(deviceData[this->deviceid].state_text, " charge");
-    if (this->islow) strcat(deviceData[this->deviceid].state_text, " low");
+    strcpy(deviceData[this->deviceid].state_1_value, String(this->batterylevel).c_str());
+    strcpy(deviceData[this->deviceid].state_1_unit, "%");
+    //if (this->ischarging) strcat(deviceData[this->deviceid].state_text, " charge");
+    //if (this->islow) strcat(deviceData[this->deviceid].state_text, " low");
     if (this->ischarging) deviceData[this->deviceid].state_marked = true; 
     else deviceData[this->deviceid].state_marked = false; 
     // Log
-    logDevice(this->deviceid,logKind::CHANGES);
+    logDevice(this->deviceid, logKind::BATT, String(deviceData[this->deviceid].state_1_value), deviceData[this->deviceid].state_1_unit);
   }  //getBatteryInfo()
 };
 // Device: Outlet (not implemented)
@@ -1072,11 +1036,11 @@ struct deviceOutlet : Service::Outlet {       // Outlet
   boolean update(){                             
     // Get State
     if(power->updated()) {
-      if (power->getNewVal()) strcpy(deviceData[this->deviceid].state_text, "on");
-      else strcpy(deviceData[this->deviceid].state_text, "on");
+      if (power->getNewVal()) strcpy(deviceData[this->deviceid].state_1_value, "on");
+      else strcpy(deviceData[this->deviceid].state_1_value, "on");
     }
 
-    logDevice(this->deviceid,logKind::CHANGES); 
+    logDevice(this->deviceid, logKind::STATE, String(deviceData[this->deviceid].state_1_value), deviceData[this->deviceid].state_1_unit);
    
     return(true);                               // return true
   } // update

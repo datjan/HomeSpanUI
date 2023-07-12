@@ -52,6 +52,9 @@ const handleServerResponseState = async () => {
         // status_psram_free
         status_psram_free = json_obj_state.psram_free;
         if (document.getElementById('psram_free')) FadeOutSetContentFadeIn('psram_free','<span class="info_text_light">' + status_psram_free + ' bytes</span>');
+        // status_mqtts
+        status_mqtt = json_obj_state.mqtt_status;
+        if (document.getElementById('mqtt_status')) FadeOutSetContentFadeIn('mqtt_status','<span class="info_text_light">' + status_mqtt + '</span>');
         // Controller Status
         if (status_controller!=json_obj_state.status) { // Only when changed
             status_controller = json_obj_state.status;
@@ -172,12 +175,12 @@ function handleServerResponseLogging(){
         }
         for (var i = 0; i < json_obj_log.log.length; i++){
             var obj = json_obj_log.log[i];
-            if (obj.homekitid!="none" && document.getElementById('loga_'+i)) {
+            if (obj.devicename!="" && document.getElementById('loga_'+i)) {
                 document.getElementById('loga_'+i).style.opacity = 0;
                 document.getElementById('loga_'+i).innerHTML = (obj.runtime_sec).toFixed(0) + ' - ' + obj.devicename;
                 FadeIn('loga_'+i);
             }
-            if (obj.homekitid!="none" && document.getElementById('logb_'+i)) {
+            if (obj.devicename!="" && document.getElementById('logb_'+i)) {
                 document.getElementById('logb_'+i).style.opacity = 0;
                 document.getElementById('logb_'+i).innerHTML = "- " + obj.action;
                 FadeIn('logb_'+i);
@@ -193,14 +196,17 @@ function openInfo(view_type = "homekit",fade = true) {
     result_text += "";
     result_text += "<table width=\"100%\">";
     result_text += "<tr><td class=\"box_header\">";
-    if (view_type=="homekit") result_text += "<span style=\"cursor:pointer;\" onclick=\"openInfo('homekit',false)\">HomeKit</span>"; 
-    else result_text += "<span style=\"cursor:pointer;color:gray;\" onclick=\"openInfo('homekit',false)\">HomeKit</span>";
+    if (view_type=="homekit") result_text += "<span style=\"cursor:pointer;\" onclick=\"openInfo('homekit',false)\">HK</span>"; 
+    else result_text += "<span style=\"cursor:pointer;color:gray;\" onclick=\"openInfo('homekit',false)\">HK</span>";
     result_text += " | ";
     if (view_type=="info") result_text += "<span style=\"cursor:pointer;\" onclick=\"openInfo('info',false)\">Con</span>"; 
     else result_text += "<span style=\"cursor:pointer;color:gray;\" onclick=\"openInfo('info',false)\">Con</span>";
     result_text += " | ";
     if (view_type=="pins") result_text += "<span style=\"cursor:pointer;\" onclick=\"openInfo('pins',false)\">Pins</span>"; 
     else result_text += "<span style=\"cursor:pointer;color:gray;\" onclick=\"openInfo('pins',false)\">Pins</span>";
+    result_text += " | ";
+    if (view_type=="mqtt") result_text += "<span style=\"cursor:pointer;\" onclick=\"openInfo('mqtt',false)\">Mqtt</span>"; 
+    else result_text += "<span style=\"cursor:pointer;color:gray;\" onclick=\"openInfo('mqtt',false)\">Mqtt</span>";
     result_text += " | ";
     if (view_type=="logging") result_text += "<span style=\"cursor:pointer;\" onclick=\"openInfo('logging',false)\">Log</span>"; 
     else result_text += "<span style=\"cursor:pointer;color:gray;\" onclick=\"openInfo('logging',false)\">Log</span>";
@@ -296,6 +302,44 @@ function openInfo(view_type = "homekit",fade = true) {
         result_text += "    <table style=\"width:100%;border:0px;padding:0;margin:0;\"><tr><td style=\"width:40%;\"><span class=\"info_text\">WiFi Rssi</span></td><td style=\"text-align:right;\"><div id=\"wifi_rssi\"><span class=\"info_text_light\">" + status_wifi_rssi + " dBm</span></div></td></tr></table>";
         result_text += "</div></td></tr>";
         result_text += "<tr><td><div class=\"box_input\">";
+        result_text += "    <span class=\"button_text\" onclick=\"closeSettings()\">Close</span><br>";
+        result_text += "</div></td></tr>";
+    }
+
+    // MQTT
+    if (view_type=="mqtt") {
+        result_text += "<tr><td><div class=\"box_input\">";
+        result_text += "    <table style=\"width:100%;border:0px;padding:0;margin:0;\"><tr><td style=\"width:60%;\"><span class=\"info_text\">Active</span></td><td style=\"text-align:right;\"><span class=\"info_text_light\">";
+        result_text += "    <select id='mqtt_active'>";
+        if (!json_obj.mqtt.active) result_text += "<option value=\"0\" selected>No</option>";
+        else result_text += "    <option value=\"0\">No</option>";
+        if (json_obj.mqtt.active) result_text += "<option value=\"1\" selected>Yes</option>";
+        else result_text += "    <option value=\"1\">Yes</option>"; 
+        result_text += "    </select>";
+        result_text += "    </span></td></tr></table>";
+        result_text += "    <hr style=\"border: 0.5px solid #f2f2f2;\">";
+        result_text += "    <table style=\"width:100%;border:0px;padding:0;margin:0;\"><tr><td style=\"width:25%;\"><span class=\"info_text\">Status</span></td><td style=\"text-align:right;\"><div id=\"mqtt_status\"><span class=\"info_text_light\">" + status_mqtt + "</span></div></td></tr></table>";
+        result_text += "</div></td></tr>";
+        result_text += "<tr><td><div class=\"box_input\">";
+        result_text += "    <table style=\"width:100%;border:0px;padding:0;margin:0;\"><tr><td style=\"width:50%;\"><span class=\"info_text\">Server</span></td><td style=\"text-align:right;\"><span class=\"info_text_light\">";
+        result_text += "        <input type=\"text\" id=\"mqtt_server\" class=\"input_text_light\" size=\"15\" maxlength=\"15\" value=\"" + json_obj.mqtt.server + "\">";
+        result_text += "    </span></td></tr></table>";
+        result_text += "    <hr style=\"border: 0.5px solid #f2f2f2;\">";
+        result_text += "    <table style=\"width:100%;border:0px;padding:0;margin:0;\"><tr><td style=\"width:50%;\"><span class=\"info_text\">Port</span></td><td style=\"text-align:right;\"><span class=\"info_text_light\">";
+        result_text += "        <input type=\"text\" id=\"mqtt_port\" class=\"input_text_light\" size=\"5\" maxlength=\"5\" value=\"" + json_obj.mqtt.port + "\">";
+        result_text += "    </span></td></tr></table>";
+        result_text += "    <hr style=\"border: 0.5px solid #f2f2f2;\">";
+        result_text += "    <table style=\"width:100%;border:0px;padding:0;margin:0;\"><tr><td style=\"width:50%;\"><span class=\"info_text\">User</span></td><td style=\"text-align:right;\"><span class=\"info_text_light\">";
+        result_text += "        <input type=\"text\" id=\"mqtt_user\" class=\"input_text_light\" size=\"15\" maxlength=\"15\" value=\"" + json_obj.mqtt.user + "\">";
+        result_text += "    </span></td></tr></table>";
+        result_text += "    <hr style=\"border: 0.5px solid #f2f2f2;\">";
+        result_text += "    <table style=\"width:100%;border:0px;padding:0;margin:0;\"><tr><td style=\"width:50%;\"><span class=\"info_text\">Password</span></td><td style=\"text-align:right;\"><span class=\"info_text_light\">";
+        result_text += "        <input type=\"text\" id=\"mqtt_password\" class=\"input_text_light\" size=\"15\" maxlength=\"15\" value=\"" + json_obj.mqtt.password + "\">";
+        result_text += "    </span></td></tr></table>";
+        result_text += "</div></td></tr>";
+        result_text += "<tr><td><div class=\"box_input\">";
+        result_text += "    <span class=\"button_text\" onclick=\"saveMqtt()\">Save (restart)</span><br>";
+        result_text += "    <hr style=\"border: 0.5px solid #f2f2f2;\">";
         result_text += "    <span class=\"button_text\" onclick=\"closeSettings()\">Close</span><br>";
         result_text += "</div></td></tr>";
     }

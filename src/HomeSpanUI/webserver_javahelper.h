@@ -92,6 +92,28 @@ function saveBoard() {
         showWaitingPeriodAndReloadSite(12);
     }
 }
+// Mqtt
+function saveMqtt() {
+    if(xmlHttpMqttSave.readyState==0 || xmlHttpMqttSave.readyState==4){
+        var params = "mqtt=1";
+        if (document.getElementById('mqtt_active')) params += "&mqtt_active=" + document.getElementById('mqtt_active').value;
+        if (document.getElementById('mqtt_server')) params += "&mqtt_server=" + document.getElementById('mqtt_server').value;
+        if (document.getElementById('mqtt_port')) params += "&mqtt_port=" + document.getElementById('mqtt_port').value;
+        if (document.getElementById('mqtt_user')) params += "&mqtt_user=" + document.getElementById('mqtt_user').value;
+        if (document.getElementById('mqtt_password')) params += "&mqtt_password=" + document.getElementById('mqtt_password').value;
+        xmlHttpMqttSave.open('POST','mqttsave'+methodending,true);
+        xmlHttpMqttSave.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+        xmlHttpMqttSave.onreadystatechange=function() { 
+            if(xmlHttpMqttSave.readyState==4 && xmlHttpMqttSave.status==200){
+                checkJsonShowError(xmlHttpMqttSave.response);
+            }
+        }
+        xmlHttpMqttSave.send(params);
+        FadeOut('box_setting_frame');
+        // Wait for restart
+        showWaitingPeriodAndReloadSite(12);
+    }
+}
 // Controller
 function saveController() {
     if(xmlHttpControllerSave.readyState==0 || xmlHttpControllerSave.readyState==4){

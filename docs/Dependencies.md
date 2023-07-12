@@ -10,6 +10,7 @@ For the ESP32 the following Board Manager ist required:
 * "[ESP32](https://github.com/espressif/arduino-esp32)" by Espressif Systems version 2.0.9
 
 You can use the following Boards Manager URL:
+
 https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
 
 ## Libraries
@@ -19,6 +20,7 @@ The following libraries must be installed:
 * [OneWire support](https://github.com/PaulStoffregen/OneWire) by PaulStoffregen
 * [DS18B20 support](https://github.com/milesburton/Arduino-Temperature-Control-Library) by milesburton
 * [DHT support](https://github.com/adafruit/DHT-sensor-library) by adafruit
+* [MQTT support](https://github.com/knolleary/pubsubclient) by knolleary
 
 
 ---

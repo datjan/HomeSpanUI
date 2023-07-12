@@ -7,7 +7,7 @@ const char index_page[] PROGMEM = R"=====(
     
     <TITLE>HomeKit Controller</TITLE>
 
-    <link rel="stylesheet" href="style.css?v=39" type="text/css" media="screen" />
+    <link rel="stylesheet" href="style.css?v=44" type="text/css" media="screen" />
     <script>
       var methodending = '';
       var xmlHttpRepository = createXmlHttpObject();
@@ -17,6 +17,7 @@ const char index_page[] PROGMEM = R"=====(
       var xmlHttpDeviceDelete = createXmlHttpObject();
       var xmlHttpDeviceSave = createXmlHttpObject();
       var xmlHttpBoardSave = createXmlHttpObject();
+      var xmlHttpMqttSave = createXmlHttpObject();
       var xmlHttpControllerSave = createXmlHttpObject();
       var xmlHttpControllerRestart = createXmlHttpObject();
       var json_obj = "";
@@ -24,13 +25,12 @@ const char index_page[] PROGMEM = R"=====(
       var json_obj_state = "";
       var json_obj_log = "";
 
-      // Pic Encoding https://base64.guru/converter/encode/file
-
       var status_controller = '---';
       var status_runtime_sec = '---';
       var status_wifi_rssi = '---';
       var status_heap_free = '---';
       var status_psram_free = '---';
+      var status_mqtt = 'waiting...';
 
       var abort_reload_site = false;
 
@@ -43,9 +43,9 @@ const char index_page[] PROGMEM = R"=====(
         return xmlHttp;
       }
     </script>
-    <script src="java.js?v=39"></script>
-    <script src="java_helper.js?v=39"></script>
-    <script src="java_qr.js?v=39"></script>
+    <script src="java.js?v=44"></script>
+    <script src="java_helper.js?v=44"></script>
+    <script src="java_qr.js?v=44"></script>
 
   </HEAD>
   <BODY onload='actPicturesControllerAndDevices();actState();'>

@@ -43,6 +43,7 @@ BH1750 support - https://github.com/claws/BH1750
 OneWire support - https://github.com/PaulStoffregen/OneWire
 DS18B20 support - https://github.com/milesburton/Arduino-Temperature-Control-Library
 DHT support - https://github.com/adafruit/DHT-sensor-library
+MQTT support - https://github.com/knolleary/pubsubclient
 ```
 
 For advanced information read [Dependencies documentation](docs/Dependencies.md)
@@ -119,7 +120,9 @@ The devices can be added and configured in an easy way. The web interface shows 
 The web interface is fully dynamic and shows you the state of each device in nearly the same way the HomeKit app does.
 
 ### Action log
-HomeSpanUI logs the last 20 activities on the controller.
+HomeSpanUI logs the last 20 activities on the controller. Every action can be send via MQTT.
+
+For advanced information read [MQTT Log documentation](docs/MqttLog.md)
 
 # Notes :page_facing_up:
 This project is just beginning, so there are still a few to-dos
@@ -131,7 +134,6 @@ This project is just beginning, so there are still a few to-dos
 ```
 Actual development on this project:
 ```
-* Action Log supports MQTT send
 * Outlet device
 * Garage door device
 * Leak device

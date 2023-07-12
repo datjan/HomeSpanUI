@@ -1,11 +1,17 @@
 
+
+
 // Structures for action logging
+enum logKind {INIT=0, STATE=1, TEMP=2, HUM=3, LUX=4, BATT=5, BRIGHT=6, ERROR=7};
+char * logKindStr[8] = {"init", "state", "temp", "hum", "lux", "batt", "bright", "error"};
 #define aLogging 20                 // maximum number of loggings
 struct {   
   long int runtime_sec = 0;
-  char devicename[20] = "none"; 
-  char homekitid[15] = "none"; 
-  String action = "none";
+  char name[21] = "";
+  logKind kind = logKind::INIT;
+  String value = ""; 
+  char unit[4] = "";
+  bool mqtt_send = true;
 } actionLogging[aLogging];
 
 // Define device types
@@ -46,7 +52,6 @@ const structType typeData[aTYPES] = {
 // Structure for controller settings
 struct {
   const char* version = "1.0.1";            // Software Version
-  const char* status = "none";   // Homespan Status
   bool restartrequired = false;  // Controller Restart Required
   // HOMEKIT
   char homekit_name[20] = "HomeKit Controller";    // HOMEKIT name - shown in HomeKit
@@ -67,6 +72,12 @@ struct {
   uint8_t board_pin_ap = 15;       // BOARD Access Point Pull Up this pin to activate the Access Point. 15 RECOMMENDED
   uint8_t board_pin_i2c_sda = 21;  // BOARD I2C Pin for SDA DATA
   uint8_t board_pin_i2c_scl = 22;  // BOARD I2C Pin for SCL CLOCK
+  // MQTT
+  bool mqtt_active = false;   // MQTT Active
+  char mqtt_server[16] = "192.168.178.51";
+  int mqtt_port = 1883;
+  char mqtt_user[16] = "";
+  char mqtt_password[16] = "";
 } controllerData;
 
 // Structure for devices settings
@@ -76,6 +87,7 @@ struct {
   char name[16] = "none";
   structType type = typeData[0];
   char homekitid[15] = "none";
+  // Config
   char text_1[17] = "";
   char text_2[17] = "";
   char text_3[17] = "";
@@ -90,26 +102,35 @@ struct {
   bool bool_1 = false;
   float float_1 = 0.0;
   float float_2 = 0.0;
-  char state_text[31] = "none";
+  // Status
+  char state_1_value[15] = "";
+  char state_1_unit[4] = "";
+  char state_2_value[15] = "";
+  char state_2_unit[4] = "";
   bool state_marked = false;
-  char error_last[31] = "";
   uint8_t state_overrule = 0;
+  // Miscs
+  String error_last = "";
   bool restartrequired = false;
 } deviceData[aDEVICES];
 
 
 // Helper Log
-void logEntry(char devicename[20], char homekitid[15], String action) {
+void logEntry(char name[21], logKind kind, String value, char unit[4] = "") {
   for(int i=aLogging-1; i>=1; i--) {
     actionLogging[i].runtime_sec = actionLogging[i-1].runtime_sec;
-    strcpy(actionLogging[i].devicename, actionLogging[i-1].devicename);
-    strcpy(actionLogging[i].homekitid, actionLogging[i-1].homekitid);
-    actionLogging[i].action = actionLogging[i-1].action;
+    strcpy(actionLogging[i].name, actionLogging[i-1].name);
+    actionLogging[i].kind = actionLogging[i-1].kind;
+    actionLogging[i].value = actionLogging[i-1].value;
+    strcpy(actionLogging[i].unit, actionLogging[i-1].unit);
+    actionLogging[i].mqtt_send = actionLogging[i-1].mqtt_send;
   }
   actionLogging[0].runtime_sec = millis()/1000;
-  strcpy(actionLogging[0].devicename, devicename);
-  strcpy(actionLogging[0].homekitid, homekitid);
-  actionLogging[0].action = action;
+  strcpy(actionLogging[0].name, name);
+  actionLogging[0].kind = kind;
+  actionLogging[0].value = value;
+  strcpy(actionLogging[0].unit, unit);
+  actionLogging[0].mqtt_send = false;
 }
 
 enum {NFC=1,IP=2,BLTE=4};
