@@ -41,6 +41,7 @@ nvs_handle controllerNVS;
 nvs_handle deviceNVS;
 // state
 const char* status_global = "none";   // Homespan Status
+String status_last_mqtt = "";         // Last MQTT Status
 bool status_mqtt_connected = false;   // MQTT Status
 
 uint8_t homekit_maxdevices_device = 1;         // In device mode only one single device can be configured
@@ -337,8 +338,8 @@ void setupWeb() {
     JSON += "},";
     JSON += "\"mqtt\":{";
     JSON += " \"active\":" + String(controllerData.mqtt_active) + ",";
-    if (status_mqtt_connected) JSON += " \"status\":\"connected\",";
-    else JSON += " \"status\":\"disconnected\",";
+    JSON += " \"connected\":" + String(status_mqtt_connected) + ",";
+    JSON += " \"last_status\":\"" + String(status_last_mqtt) + "\",";
     JSON += " \"server\":\"" + String(controllerData.mqtt_server) + "\",";
     JSON += " \"port\":" + String(controllerData.mqtt_port) + ",";
     JSON += " \"user\":\"" + String(controllerData.mqtt_user) + "\",";
@@ -355,6 +356,8 @@ void setupWeb() {
       JSON += " \"pin_1_reverse\":" + String(deviceData[i].pin_1_reverse) + ", \"pin_2_reverse\":" + String(deviceData[i].pin_2_reverse) + ", \"pin_3_reverse\":" + String(deviceData[i].pin_3_reverse) + ", \"pin_4_reverse\":" + String(deviceData[i].pin_4_reverse) + ",";
       JSON += " \"bool_1\":" + String(deviceData[i].bool_1) + ",";
       JSON += " \"float_1\":" + String(deviceData[i].float_1) + ", \"float_2\":" + String(deviceData[i].float_2) + ",";
+      JSON += " \"state_1\":{\"value\":\"" + String(deviceData[i].state_1_value) + "\", \"unit\":\"" + String(deviceData[i].state_1_unit) + "\"},";
+      JSON += " \"state_2\":{\"value\":\"" + String(deviceData[i].state_2_value) + "\", \"unit\":\"" + String(deviceData[i].state_2_unit) + "\"},";
       JSON += " \"state\":\"waiting...\", \"marked\":" + String(deviceData[i].state_marked) + ", \"error_last\":\"" + String(deviceData[i].error_last) + "\"}";
     }
     JSON += "],";
@@ -413,12 +416,15 @@ void setupWeb() {
     JSON += "\"heap_free\":" + String(ESP.getFreeHeap()) + ",";
     JSON += "\"psram_total\":" + String(ESP.getPsramSize()) + ",";
     JSON += "\"psram_free\":" + String(ESP.getFreePsram()) + ",";
-    if (status_mqtt_connected) JSON += " \"mqtt_status\":\"connected\",";
-    else JSON += " \"mqtt_status\":\"disconnected\",";
+    JSON += "\"mqtt_connected\":" + String(status_mqtt_connected) + ",";
     JSON += "\"devices_state\":[";
     for (int i = 0; i < aDEVICES; i++) {
       if (i > 0) JSON += ",";
-      JSON += "{\"id\":" + String(i + 1) + ", \"active\":" + String(deviceData[i].active) + ", \"state\":\"" + String(deviceData[i].state_1_value) + String(deviceData[i].state_1_unit) + " " + String(deviceData[i].state_2_value) + String(deviceData[i].state_2_unit) + "\", \"marked\":" + String(deviceData[i].state_marked) + "}";
+      JSON += "{\"id\":" + String(i + 1) + ", \"active\":" + String(deviceData[i].active) + ",";
+      JSON += " \"state_1\":{\"value\":\"" + String(deviceData[i].state_1_value) + "\", \"unit\":\"" + String(deviceData[i].state_1_unit) + "\"},";
+      JSON += " \"state_2\":{\"value\":\"" + String(deviceData[i].state_2_value) + "\", \"unit\":\"" + String(deviceData[i].state_2_unit) + "\"},";
+      JSON += " \"state\":\"" + String(deviceData[i].state_1_value) + String(deviceData[i].state_1_unit) + " " + String(deviceData[i].state_2_value) + String(deviceData[i].state_2_unit) + "\",";
+      JSON += " \"marked\":" + String(deviceData[i].state_marked) + "}";
     }
     JSON += "]";
     JSON += "}";
@@ -911,12 +917,24 @@ void processMQTT() {
             Serial.println("MQTT connecting...");
             if (mqtt_client.connect("ESP32Client", controllerData.mqtt_user, controllerData.mqtt_password )) {
               LOG1("MQTT connected \n");
+              status_last_mqtt = "connection ok";
               status_mqtt_connected = true;
             } else {
               LOG1("MQTT connect failed: " + String(mqtt_client.state()) + " \n");
               logEntry(controllerData.homekit_name, logKind::ERROR, "MQTT connect failed: " + String(mqtt_client.state()));
+              status_last_mqtt = "connect failed: " + String(mqtt_client.state());
               status_mqtt_connected = false;
               controllerData.mqtt_active = false; // Abort MQTT, set to inactive
+              // -4 : MQTT_CONNECTION_TIMEOUT - the server didn't respond within the keepalive time
+              // -3 : MQTT_CONNECTION_LOST - the network connection was broken
+              // -2 : MQTT_CONNECT_FAILED - the network connection failed
+              // -1 : MQTT_DISCONNECTED - the client is disconnected cleanly
+              // 0 : MQTT_CONNECTED - the client is connected
+              // 1 : MQTT_CONNECT_BAD_PROTOCOL - the server doesn't support the requested version of MQTT
+              // 2 : MQTT_CONNECT_BAD_CLIENT_ID - the server rejected the client identifier
+              // 3 : MQTT_CONNECT_UNAVAILABLE - the server was unable to accept the connection
+              // 4 : MQTT_CONNECT_BAD_CREDENTIALS - the username/password were rejected
+              // 5 : MQTT_CONNECT_UNAUTHORIZED - the client was not authorized to connect
             }
           }
           char devicename[55];

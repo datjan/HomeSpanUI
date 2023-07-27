@@ -7,7 +7,7 @@ const char index_page[] PROGMEM = R"=====(
     
     <TITLE>HomeKit Controller</TITLE>
 
-    <link rel="stylesheet" href="style.css?v=44" type="text/css" media="screen" />
+    <link rel="stylesheet" href="style.css?v=45" type="text/css" media="screen" />
     <script>
       var methodending = '';
       var xmlHttpRepository = createXmlHttpObject();
@@ -43,9 +43,9 @@ const char index_page[] PROGMEM = R"=====(
         return xmlHttp;
       }
     </script>
-    <script src="java.js?v=44"></script>
-    <script src="java_helper.js?v=44"></script>
-    <script src="java_qr.js?v=44"></script>
+    <script src="java.js?v=45"></script>
+    <script src="java_helper.js?v=45"></script>
+    <script src="java_qr.js?v=45"></script>
 
   </HEAD>
   <BODY onload='actPicturesControllerAndDevices();actState();'>

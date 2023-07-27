@@ -54,13 +54,13 @@ struct {
   const char* version = "1.0.1";            // Software Version
   bool restartrequired = false;  // Controller Restart Required
   // HOMEKIT
-  char homekit_name[20] = "HomeKit Controller";    // HOMEKIT name - shown in HomeKit
+  char homekit_name[20] = "HomeSpanUI";    // HOMEKIT name - shown in HomeKit
   char homekit_type[7] = "device";    // HOMEKIT type - bridge/device
   uint8_t homekit_maxdevices = 1;   // HOMEKIT maximum devices
   char homekit_code[9] = "11122333";  // HOMEKIT code
   uint16_t homekit_port = 1201;      // HOMEKIT port
   const char* homekit_manufacturer = "homekitblogger.de";    // HOMEKIT manufacturer
-  const char* homekit_serialnumber = "homekitUI";    // HOMEKIT serialnumber
+  const char* homekit_serialnumber = "HomeSpanUI";    // HOMEKIT serialnumber
   const char* homekit_hostnamebase = "ESP";  // HOMEKIT the full MDNS host name is broadcast by HomeSpan
   char homekit_hostnamesuffix[7] = "";  
   const char* homekit_modelname = "ESP32HomeKit";  // HOMEKIT the HAP model name HomeSpan broadcasts for pairing to HomeKit

@@ -53,7 +53,8 @@ const handleServerResponseState = async () => {
         status_psram_free = json_obj_state.psram_free;
         if (document.getElementById('psram_free')) FadeOutSetContentFadeIn('psram_free','<span class="info_text_light">' + status_psram_free + ' bytes</span>');
         // status_mqtts
-        status_mqtt = json_obj_state.mqtt_status;
+        if (json_obj_state.mqtt_status) status_mqtt = "Yes";
+        else status_mqtt = "No";
         if (document.getElementById('mqtt_status')) FadeOutSetContentFadeIn('mqtt_status','<span class="info_text_light">' + status_mqtt + '</span>');
         // Controller Status
         if (status_controller!=json_obj_state.status) { // Only when changed
@@ -318,7 +319,9 @@ function openInfo(view_type = "homekit",fade = true) {
         result_text += "    </select>";
         result_text += "    </span></td></tr></table>";
         result_text += "    <hr style=\"border: 0.5px solid #f2f2f2;\">";
-        result_text += "    <table style=\"width:100%;border:0px;padding:0;margin:0;\"><tr><td style=\"width:25%;\"><span class=\"info_text\">Status</span></td><td style=\"text-align:right;\"><div id=\"mqtt_status\"><span class=\"info_text_light\">" + status_mqtt + "</span></div></td></tr></table>";
+        result_text += "    <table style=\"width:100%;border:0px;padding:0;margin:0;\"><tr><td style=\"width:40%;\"><span class=\"info_text\">Connected</span></td><td style=\"text-align:right;\"><div id=\"mqtt_status\"><span class=\"info_text_light\">" + status_mqtt + "</span></div></td></tr></table>";
+        result_text += "    <hr style=\"border: 0.5px solid #f2f2f2;\">";
+        result_text += "    <table style=\"width:100%;border:0px;padding:0;margin:0;\"><tr><td style=\"width:40%;\"><span class=\"info_text\">Last Status</span></td><td style=\"text-align:right;\"><div id=\"mqtt_status\"><span class=\"info_text_light\">" + json_obj.mqtt.last_status + "</span></div></td></tr></table>";
         result_text += "</div></td></tr>";
         result_text += "<tr><td><div class=\"box_input\">";
         result_text += "    <table style=\"width:100%;border:0px;padding:0;margin:0;\"><tr><td style=\"width:50%;\"><span class=\"info_text\">Server</span></td><td style=\"text-align:right;\"><span class=\"info_text_light\">";
@@ -326,7 +329,7 @@ function openInfo(view_type = "homekit",fade = true) {
         result_text += "    </span></td></tr></table>";
         result_text += "    <hr style=\"border: 0.5px solid #f2f2f2;\">";
         result_text += "    <table style=\"width:100%;border:0px;padding:0;margin:0;\"><tr><td style=\"width:50%;\"><span class=\"info_text\">Port</span></td><td style=\"text-align:right;\"><span class=\"info_text_light\">";
-        result_text += "        <input type=\"text\" id=\"mqtt_port\" class=\"input_text_light\" size=\"5\" maxlength=\"5\" value=\"" + json_obj.mqtt.port + "\">";
+        result_text += "        <input type=\"text\" id=\"mqtt_port\" class=\"input_text_light\" size=\"5\" maxlength=\"5\" value=\"" + json_obj.mqtt.port + "\" onkeypress=\"return charInt(event.charCode)\">";
         result_text += "    </span></td></tr></table>";
         result_text += "    <hr style=\"border: 0.5px solid #f2f2f2;\">";
         result_text += "    <table style=\"width:100%;border:0px;padding:0;margin:0;\"><tr><td style=\"width:50%;\"><span class=\"info_text\">User</span></td><td style=\"text-align:right;\"><span class=\"info_text_light\">";

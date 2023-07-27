@@ -106,6 +106,8 @@ Other
 * Security System - Contact for every state in HomeKit
 ```
 
+For advanced information read [Devices documentation](docs/Devices.md)
+
 ### Easy controller setup
 The web interface features an easy controller setup for the usage of multiple esp32 homekit controllers.
 
