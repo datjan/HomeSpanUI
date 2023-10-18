@@ -95,6 +95,28 @@ Wiring:
 
 
 
+## Relais
+
+### Outlet
+
+Simple relais.
+
+```
+    _________
+   |         |
+   |  Relais |
+   |_________|
+   |    |    |   
+  VCC  GND  IN   
+```
+| ESP32 |  Relais 3.3V/5V |
+| ------------- | ------------- |
+| 3.3V/5V  | VCC | 
+| GND  | GND |
+| GPIO  | IN |
+
+
+
 ## Sensors
 
 ### Contact

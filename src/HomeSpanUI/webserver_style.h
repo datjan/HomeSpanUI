@@ -20,9 +20,9 @@ table, th, td {border: 0px solid blue;}
     font-family: Arial, Helvetica, sans-serif;
     font-size: 14px;
     font-weight: bold;
-    color: #a5a5a5;
+    color: white;
     float: both;
-    width:600px;
+    width:580px;
     margin-left:15px;
     margin-right:15px;
     margin-top:0px;
@@ -35,10 +35,9 @@ table, th, td {border: 0px solid blue;}
     border-bottom-right-radius: 1em;
     border-top-left-radius: 1em;
     border-bottom-left-radius: 1em;
-    border:1px solid #a6a6a6;
-    background-color:#f2f2f2;
+    border:0px solid #a6a6a6;
+    background: rgba(149, 158, 149, 0.6);
     overflow:hidden;
-    cursor: pointer;
 }
 .devices_header 
 {
@@ -104,9 +103,41 @@ table, th, td {border: 0px solid blue;}
     border-top-left-radius: 20px;
     border-bottom-left-radius: 20px;
     border:0px solid #a6a6a6;
+    /*background-color:#788078;*/
+    overflow:hidden;
+    cursor: pointer;
+}
+.div_device_logo_switch
+{
+    line-height: 1.3;
+    font-family: monospace;
+    white-space: pre;
+    color: yellow;
+    text-align:center;
+    vertical-align: middle;
+    display: inline-block;
+    width:40px;
+    height:40px; 
+    margin-left:0px;
+    margin-right:0px;
+    margin-top:0px;
+    margin-bottom:0px;
+    padding-left:0px;
+    padding-right:0px;
+    padding-top:0px;
+    padding-bottom:0px;
+    border-top-right-radius: 20px;
+    border-bottom-right-radius: 20px;
+    border-top-left-radius: 20px;
+    border-bottom-left-radius: 20px;
+    border:0px solid #a6a6a6;
     background-color:#788078;
     overflow:hidden;
     cursor: pointer;
+}
+.div_device_logo_switch_marked
+{
+    background: rgba(30, 170, 201, 1) !important;
 }
 .div_device_nobopama {border:0px;padding:0;margin:0;}
 .span_device_name{
@@ -284,6 +315,13 @@ table, th, td {border: 0px solid blue;}
     vertical-align: middle;
     overflow:hidden;
 }
+.text_homekit_code {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 20px;
+    font-weight: bold;
+    color: #8dcaa7;
+    text-align:center;
+}
 .input_text {
     font-family: Arial, Helvetica, sans-serif;
     font-size: 14px;
@@ -433,7 +471,9 @@ select {
 
 @media (max-width: 650px)
 {
-    .div_hub_status { width: 300px !important; }
+    .hub_header { font-size: 20px !important; }
+    .div_hub_status { width: 290px !important; }
+    .devices_header { font-size: 20px !important; }
     .table_main { width: 300px !important; }
     .table_main_device { width: 135px !important; }
     .table_main_loader { width: 40px !important; }

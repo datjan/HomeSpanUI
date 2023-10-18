@@ -2,13 +2,13 @@
 
 
 // Structures for action logging
-enum logKind {INIT=0, STATE=1, TEMP=2, HUM=3, LUX=4, BATT=5, BRIGHT=6, ERROR=7};
-char * logKindStr[8] = {"init", "state", "temp", "hum", "lux", "batt", "bright", "error"};
+enum deviceStateKind {NONE=0, INIT=1, STATE=2, TEXT=3, SWITCH=4, CONTACT=5, TEMP=6, HUM=7, LUX=8, BATT=9, BRIGHT=10, LEAK=11, MOTION=12, SMOKE=13, ERROR=14};
+char * deviceStateKindStr[15] = {"none", "init", "state", "text", "switch", "contact", "temp", "hum", "lux", "batt", "bright", "leak", "motion", "smoke", "error"};
 #define aLogging 20                 // maximum number of loggings
 struct {   
   long int runtime_sec = 0;
   char name[21] = "";
-  logKind kind = logKind::INIT;
+  deviceStateKind kind = deviceStateKind::NONE;
   String value = ""; 
   char unit[4] = "";
   bool mqtt_send = true;
@@ -21,32 +21,33 @@ struct structType {
   char name[21];
   char code[11];
   bool onlyonce; // Only once per Controller
-  char pintype[6]; //GPIO,ADC1,ADC2,TOUCH};
+  bool switchable; // Switchable via UI
+  char pintype[6]; // GPIO,ADC1,ADC2,TOUCH;
   uint8_t accessory_count; // How many SpanAccessory within the Device
   uint8_t picture_id;
 };
 const structType typeData[aTYPES] = {
-  {false,"", "",false, "",1,0},
-  {false,"Battery (MODBUS)", "batmodbus",false, "",1,0},
-  {true,"Button", "button",false, "GPIO",1,2},
-  {true,"Contact", "contact",false, "GPIO",1,4},
-  {true,"Doorbell", "doorbell",false, "GPIO",1,2},
-  {false,"Garage Door", "garage",false, "GPIO",1,6},
-  {false,"Leak", "leak",false, "GPIO",1,0},
-  {true,"Led", "led",false, "",1,1},
-  {true,"Led (MAX7219)", "maxled",true, "GPIO",4,1},
-  {true,"Led (RGB)", "rgbled",false, "",1,1},
-  {true,"Light (BH1750)", "bh1750",true, "I2C",1,0},
-  {true,"Light (TEMT6000)", "temt6000",false, "ADC1",1,0},
-  {true,"Motion (HC-SR501)", "hcsr501",false, "GPIO",1,4},
-  {true,"Motion (SW420)", "sw420",false, "GPIO",1,4},
-  {false,"Outlet", "outlet",false, "GPIO",1,0},
-  {true,"Security", "security",false, "GPIO",1,5},
-  {true,"Security (NOLOGIC)", "terxon",false, "GPIO",1,5},
-  {true,"Smoke (MQ-2)", "mq2",false, "GPIO",1,0},
-  {true,"Temp. (DS18B20)", "ds18b20",false, "ADC2",1,7},
-  {true,"Temp. (DHT11)", "dht11",false, "ADC2",1,7},
-  {true,"Temp. (DHT22)", "dht22",false, "ADC2",1,7}
+  {false,"", "",false,false, "",1,0},
+  {false,"Battery (MODBUS)", "batmodbus",false,false, "",1,0},
+  {true,"Button", "button",false,false, "GPIO",1,2},
+  {true,"Contact", "contact",false,false, "GPIO",1,4},
+  {true,"Doorbell", "doorbell",false,false, "GPIO",1,2},
+  {false,"Garage Door", "garage",false,false, "GPIO",1,6},
+  {false,"Leak", "leak",false,false, "GPIO",1,0},
+  {true,"Led", "led",false,true, "",1,1},
+  {true,"Led (MAX7219)", "maxled",true,false, "GPIO",4,1},
+  {true,"Led (RGB)", "rgbled",false,true, "",1,1},
+  {true,"Light (BH1750)", "bh1750",true,false, "I2C",1,0},
+  {true,"Light (TEMT6000)", "temt6000",false,false, "ADC1",1,0},
+  {true,"Motion (HC-SR501)", "hcsr501",false,false, "GPIO",1,4},
+  {true,"Motion (SW420)", "sw420",false,false, "GPIO",1,4},
+  {true,"Outlet", "outlet",false,true, "GPIO",1,2},
+  {true,"Security", "security",false,false, "GPIO",1,5},
+  {true,"Security (NOLOGIC)", "terxon",false,false, "GPIO",1,5},
+  {true,"Smoke (MQ-2)", "mq2",false,false, "GPIO",1,0},
+  {true,"Temp. (DS18B20)", "ds18b20",false,false, "ADC2",1,7},
+  {true,"Temp. (DHT11)", "dht11",false,false, "ADC2",1,7},
+  {true,"Temp. (DHT22)", "dht22",false,false, "ADC2",1,7}
 };
 
 // Structure for controller settings
@@ -105,8 +106,10 @@ struct {
   // Status
   char state_1_value[15] = "";
   char state_1_unit[4] = "";
+  deviceStateKind state_1_type = deviceStateKind::NONE;
   char state_2_value[15] = "";
   char state_2_unit[4] = "";
+  deviceStateKind state_2_type = deviceStateKind::NONE;
   bool state_marked = false;
   uint8_t state_overrule = 0;
   // Miscs
@@ -116,7 +119,7 @@ struct {
 
 
 // Helper Log
-void logEntry(char name[21], logKind kind, String value, char unit[4] = "") {
+void logEntry(char name[21], deviceStateKind kind, String value, char unit[4] = "") {
   for(int i=aLogging-1; i>=1; i--) {
     actionLogging[i].runtime_sec = actionLogging[i-1].runtime_sec;
     strcpy(actionLogging[i].name, actionLogging[i-1].name);

@@ -22,13 +22,20 @@ function actLogging(){
         xmlHttpLogging.send(null);
     }
 }
+const actStateOngoing = async () => {
+    if(xmlHttpState.readyState==0 || xmlHttpState.readyState==4){
+        xmlHttpState.open('GET','state'+methodending,true);
+        xmlHttpState.onreadystatechange=handleServerResponseState;
+        xmlHttpState.send(null);
+    }
+    setTimeout('actStateOngoing()',10000);
+}
 const actState = async () => {
     if(xmlHttpState.readyState==0 || xmlHttpState.readyState==4){
         xmlHttpState.open('GET','state'+methodending,true);
         xmlHttpState.onreadystatechange=handleServerResponseState;
         xmlHttpState.send(null);
     }
-    setTimeout('actState()',10000);
 }
 const handleServerResponseState = async () => {
     if(xmlHttpState.readyState==4 && xmlHttpState.status==200){
@@ -68,17 +75,20 @@ const handleServerResponseState = async () => {
             var element_name_id = "device_name_" + obj.id;
             var element_state_id = "device_state_" + obj.id;
             var element_device_id = "div_device_" + obj.id;
+            var element_device_logo_id = "div_device_logo_" + obj.id;
             if (document.getElementById(element_state_id)) {
                 if (document.getElementById(element_state_id).innerHTML!=obj.state) {
                     FadeOutSetContentFadeIn(element_state_id,obj.state);
                 }
                 if (obj.marked==true) {
                     document.getElementById(element_device_id).classList.add("div_device_marked");
+                    if (document.getElementById(element_device_logo_id).classList.contains("div_device_logo_switch")) document.getElementById(element_device_logo_id).classList.add("div_device_logo_switch_marked");
                     document.getElementById(element_state_id).classList.add("span_device_comment_marked");
                     document.getElementById(element_name_id).classList.add("span_device_name_marked");
                 } 
                 if (obj.marked==false) {
                     document.getElementById(element_device_id).classList.remove("div_device_marked");
+                    if (document.getElementById(element_device_logo_id).classList.contains("div_device_logo_switch")) document.getElementById(element_device_logo_id).classList.remove("div_device_logo_switch_marked");
                     document.getElementById(element_state_id).classList.remove("span_device_comment_marked");
                     document.getElementById(element_name_id).classList.remove("span_device_name_marked");
                 }
@@ -114,7 +124,6 @@ function handleServerResponse(){
         FadeIn('hub_header');
         // Fill Hub Status
         document.getElementById('hub_status').innerHTML = json_obj.status;
-        document.getElementById('homekit_code').innerHTML = json_obj.homekit.code.toString().substring(0, 3) + "-" + json_obj.homekit.code.toString().substring(3, 5) + "-" + json_obj.homekit.code.toString().substring(5, 8);
         FadeIn("div_hub_status");
         // Fill Devices Header
         document.getElementById('devices_header').style.opacity = 0;
@@ -122,16 +131,19 @@ function handleServerResponse(){
         FadeIn('devices_header');
         FadeIn('div_device_add');
         FadeIn('div_device_reload');
+        FadeIn('div_device_setting');
         // Fill QR-Code
         document.getElementById('qrcode').style.opacity = 0;
         document.getElementById('qrcode').innerHTML = "";
         generateQrCode(json_obj.homekit.qrcode);
         FadeIn('qrcode');
+        document.getElementById('homekit_code').innerHTML = json_obj.homekit.code.toString().substring(0, 3) + "-" + json_obj.homekit.code.toString().substring(3, 5) + "-" + json_obj.homekit.code.toString().substring(5, 8);
+        FadeIn('homekit_code');
         // Fill Hub Footer
         document.getElementById('box_footer').style.opacity = 0;
         document.getElementById('box_footer').innerHTML = '<a href="https://www.homekitblogger.de/" target="_blank" class="box_footer_link">homekitblogger.de</a> | ' + json_obj.homekit.type + " | v" + json_obj.version;
         FadeIn('box_footer');
-
+        // Fill Devices
         var result_text = "";
         for (var i = 0; i < json_obj.homekit_devices.length; i++){
             var obj = json_obj.homekit_devices[i];
@@ -140,12 +152,17 @@ function handleServerResponse(){
                 for (var x = 0; x < json_obj_pic.length; x++){
                     if (json_obj_pic[x].id==obj.type.picture_id) pic = '<img width="30px height="30px" style="margin-top:5px;" src="data:' + json_obj_pic[x].data + ',' + json_obj_pic[x].base64 + '">';
                 }
-                result_text += "<div id=\"div_device_" + obj.id + "\" class=\"div_device waiting_gray\" onclick=\"openSettings(" + obj.id + ")\">";
+                picclass = "div_device_logo";
+                if (obj.type.switchable) picclass = "div_device_logo_switch";
+                piconclickstr = " onclick=\"openSettings(" + obj.id + ")\"";
+                if (obj.type.switchable) piconclickstr = " onclick=\"runAction(" + obj.id + ", 'switch')\"";
+
+                result_text += "<div id=\"div_device_" + obj.id + "\" class=\"div_device waiting_gray\">";
                 result_text += "<table height=\"30px\" class=\"div_device_nobopama\">";
                 result_text += "  <tr class=\"div_device_nobopama\">";
-                result_text += "    <td class=\"div_device_nobopama\" width=\"30px\"><div id=\"div_device_logo\" class=\"div_device_logo\">" + pic + "</div></td>";
+                result_text += "    <td class=\"div_device_nobopama\" width=\"30px\"" + piconclickstr + "><div id=\"div_device_logo_" + obj.id + "\" class=\"" + picclass + "\">" + pic + "</div></td>";
                 result_text += "    <td class=\"div_device_nobopama\" width=\"10px\"></td>";
-                result_text += "    <td class=\"div_device_nobopama\" width=\"200px\">";
+                result_text += "    <td class=\"div_device_nobopama\" width=\"200px\" onclick=\"openSettings(" + obj.id + ")\">";
                 result_text += "      <span id=\"device_name_" + obj.id + "\" class=\"span_device_name\">" + obj.name + "</span><br>";
                 if (obj.restartrequired) {
                     result_text += "<span id=\"device_state_red_" + obj.id + "\" class=\"span_device_comment_red\">restart required</span>";
@@ -606,6 +623,17 @@ function openSettings(device_id,view_type = "device",fade = true, overrule_devic
             result_text += " DO  GND  VCC  GND DO  VCC";
             result_text += "</pre></div></td></tr>";
         }
+        if (device_type=="outlet") {
+            arrWiring.push("ESP32 -> Relais 3V/5V","Board 3.3V/5V -> VCC","Board GND -> GND","Board Pin GPIO -> IN");
+            result_text += "<tr><td><div class=\"box_input\"><pre>";
+            result_text += "    ____________<br>";
+            result_text += "   |            |<br>";
+            result_text += "   |   Relais   |<br>";
+            result_text += "   |____________|<br>";
+            result_text += "   |      |     |  <br>";
+            result_text += "  VCC    GND   IN ";
+            result_text += "</pre></div></td></tr>";
+        }
         result_text += "<tr><td><div class=\"box_input\">";
         for (var i = 0; i < arrWiring.length; i++){
             if (i>=1) result_text += "<hr style=\"border: 0.5px solid #f2f2f2;\">";
@@ -638,7 +666,7 @@ function openSettings(device_id,view_type = "device",fade = true, overrule_devic
         if (device_type=="dht11" || device_type=="dht22") {name_pin_1 = "ADC IN";name_float_1 = "Temp. Offset";name_float_2 = "Humidity Offset";name_bool_1 = "Celsius";}
         if (device_type=="sw420" || device_type=="hcsr501" || device_type=="mq2") {name_pin_1 = "GPIO IN";name_float_1 = "Motion Timer (millsec)";}
         if (device_type=="bh1750") name_float_1 = "Light Offset";
-        if (device_type=="outlet") name_pin_1 = "GPIO OUT";
+        if (device_type=="outlet") name_pin_1 = "GPIO";
         result_text += "<tr><td><div class=\"box_input\">";
         result_text += "    <table style=\"width:100%;border:0px;padding:0;margin:0;\"><tr><td style=\"width:50%;\"><span class=\"info_text\">Device ID</span></td><td style=\"text-align:right;\"><span class=\"info_text_light\">" + device_id + "</span></td></tr></table>";
         result_text += "    <hr style=\"border: 0.5px solid #f2f2f2;\">";

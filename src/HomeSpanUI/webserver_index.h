@@ -7,13 +7,14 @@ const char index_page[] PROGMEM = R"=====(
     
     <TITLE>HomeKit Controller</TITLE>
 
-    <link rel="stylesheet" href="style.css?v=45" type="text/css" media="screen" />
+    <link rel="stylesheet" href="style.css?v=49" type="text/css" media="screen" />
     <script>
       var methodending = '';
       var xmlHttpRepository = createXmlHttpObject();
       var xmlHttpPictures = createXmlHttpObject();
       var xmlHttpState = createXmlHttpObject();
       var xmlHttpLogging = createXmlHttpObject();
+      var xmlHttpAction = createXmlHttpObject();
       var xmlHttpDeviceDelete = createXmlHttpObject();
       var xmlHttpDeviceSave = createXmlHttpObject();
       var xmlHttpBoardSave = createXmlHttpObject();
@@ -43,28 +44,34 @@ const char index_page[] PROGMEM = R"=====(
         return xmlHttp;
       }
     </script>
-    <script src="java.js?v=45"></script>
-    <script src="java_helper.js?v=45"></script>
-    <script src="java_qr.js?v=45"></script>
+    <script src="java.js?v=48"></script>
+    <script src="java_helper.js?v=48"></script>
+    <script src="java_qr.js?v=48"></script>
 
   </HEAD>
-  <BODY onload='actPicturesControllerAndDevices();actState();'>
+  <BODY onload='actPicturesControllerAndDevices();actStateOngoing();'>
     <div id="box_message" class="box_message"></div>
     <A id="box_setting_frame"></A>
     <CENTER>
     <br>
-    <A id="hub_header" class="hub_header waiting_gray"></A><br>
-    <div id="div_hub_status" class="div_hub_status waiting_gray" onclick="openInfo()" style="opacity:0;">
-      <A id='hub_status'>&nbsp;</A><br><A id='homekit_code'>&nbsp;</A></td> 
+    <table class="table_main" style="width:600px;height:34px;">
+        <tr>
+            <td class="table_main_device" style="width:290px;height:26px;"><A id="hub_header" class="hub_header waiting_gray"></A></td>
+            <td class="table_main_spacer" style="width:220px;"></td>
+            <td class="table_main_add" style="width:30px;"><div id="div_device_add" class="div_device_add waiting_gray" onclick="openSettings(0)" style="opacity:0;">+</div></td>
+            <td class="table_main_reload" style="width:30px;"><div id="div_device_reload" class="div_device_reload waiting_gray" onclick="actControllerAndDevices()" style="opacity:0;">&#8635;</div></td>
+            <td class="table_main_reload" style="width:30px;"><div id="div_device_setting" class="div_device_reload waiting_gray" onclick="openInfo()" style="opacity:0;">...</div></td>
+        </tr>
+    </table>
+    <div id="div_hub_status" class="div_hub_status waiting_gray" style="opacity:0;">
+      <A id='hub_status'>&nbsp;</A></td> 
     </div>
     <br>
     <table class="table_main" style="width:600px;height:34px;">
         <tr>
             <td class="table_main_device" style="width:290px;height:26px;"><A id="devices_header" class="devices_header waiting_gray"></A> </td>
             <td class="table_main_loader" style="width:40px;"><div id="loader" class="loader"></div></td>
-            <td class="table_main_loadertext" style="width:210px;"><div id='loader_message' class="loader_text"></div></td>
-            <td class="table_main_add" style="width:30px;"><div id="div_device_add" class="div_device_add waiting_gray" onclick="openSettings(0)" style="opacity:0;">+</div></td>
-            <td class="table_main_reload" style="width:30px;"><div id="div_device_reload" class="div_device_reload waiting_gray" onclick="actControllerAndDevices()" style="opacity:0;">&#8635;</div></td>
+            <td class="table_main_loadertext" style="width:270px;"><div id='loader_message' class="loader_text"></div></td>
         </tr>
     </table>
     <div id="table_devices" class="table_main" style="width:600px;display: inline-block;">
@@ -76,7 +83,8 @@ const char index_page[] PROGMEM = R"=====(
     </div> 
     <br><br>
     <div id="table_qrcode" class="table_main" style="width:600px;text-align:center;padding-top:30px;">
-      <div id="qrcode" classe="waiting_gray"></div>
+      <div id="qrcode" class="waiting_gray"></div>
+      <A id='homekit_code' class="text_homekit_code waiting_gray" style="opacity:0;">&nbsp;</A>
     </div>     
     <br><br><br><br>
     <div id="box_footer" class="box_footer"></div>

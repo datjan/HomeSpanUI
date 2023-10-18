@@ -47,12 +47,28 @@ bool status_mqtt_connected = false;   // MQTT Status
 uint8_t homekit_maxdevices_device = 1;         // In device mode only one single device can be configured
 uint8_t homekit_maxdevices_bridge = aDEVICES;  // In bridge mode up to max devices can be configured
 
+deviceContactSensor *classContactSensor[aDEVICES];
+deviceLeakSensor *classLeakSensor[aDEVICES];
+deviceProgButton *classProgButton[aDEVICES];
+deviceDoorBell *classDoorBell[aDEVICES];
+deviceSecuritySystem *classSecuritySystem[aDEVICES];
+deviceGenericLED *classGenericLED[aDEVICES];
+deviceRgbLED *classRgbLED[aDEVICES];
+deviceMax7219LED *classMax7219LED[aDEVICES];
+deviceGarageDoorOpener *classGarageDoorOpener[aDEVICES];
+deviceTemperatureSensor *classTemperatureSensor[aDEVICES];
+deviceLightSensor *classLightSensor[aDEVICES];
+deviceMotionSensor *classMotionSensor[aDEVICES];
+deviceSmokeSensor *classSmokeSensor[aDEVICES];
+deviceOutlet *classOutlet[aDEVICES];
+deviceBatteryService *classBatteryService[aDEVICES];
+
 void setup() {
 
   Serial.begin(115200);
 
   //logEntry(controllerData.homekit_name,(char*)controllerData.homekit_serialnumber, "start");
-  logEntry(controllerData.homekit_name, logKind::INIT,"ok");
+  logEntry(controllerData.homekit_name, deviceStateKind::INIT,"ok");
 
   // Get setup from on volatile storage
   readFromNVS();
@@ -120,26 +136,26 @@ void setup() {
           new deviceAccessoryInformation(deviceData[i].name, controllerData.homekit_manufacturer, deviceData[i].homekitid, controllerData.board_name, controllerData.version, 0);
         // Set Service within DeviceAccessory within BridgeAccessory within Category
         for (int a = 0; a < deviceData[i].type.accessory_count; a++) { // Multi Services in one Accessory
-          if (strcmp(deviceData[i].type.code, "led") == 0) new deviceGenericLED(i);
-          if (strcmp(deviceData[i].type.code, "rgbled") == 0) new deviceRgbLED(i);
-          if (strcmp(deviceData[i].type.code, "maxled") == 0) new deviceMax7219LED(i,a);
-          if (strcmp(deviceData[i].type.code, "button") == 0) new deviceProgButton(i,i);
-          if (strcmp(deviceData[i].type.code, "doorbell") == 0) new deviceDoorBell(i,i);
-          if (strcmp(deviceData[i].type.code, "contact") == 0) new deviceContactSensor(i);
-          if (strcmp(deviceData[i].type.code, "leak") == 0) new deviceLeakSensor(i);
-          if (strcmp(deviceData[i].type.code, "security") == 0) new deviceSecuritySystem(i);
-          if (strcmp(deviceData[i].type.code, "terxon") == 0) new deviceSecuritySystem(i);
-          if (strcmp(deviceData[i].type.code, "garage") == 0) new deviceGarageDoorOpener(i);
-          if (strcmp(deviceData[i].type.code, "ds18b20") == 0) new deviceTemperatureSensor(i);
-          if (strcmp(deviceData[i].type.code, "dht11") == 0) new deviceTemperatureSensor(i);
-          if (strcmp(deviceData[i].type.code, "dht22") == 0) new deviceTemperatureSensor(i);
-          if (strcmp(deviceData[i].type.code, "bh1750") == 0) new deviceLightSensor(i);
-          if (strcmp(deviceData[i].type.code, "temt6000") == 0) new deviceLightSensor(i);
-          if (strcmp(deviceData[i].type.code, "sw420") == 0) new deviceMotionSensor(i);
-          if (strcmp(deviceData[i].type.code, "hcsr501") == 0) new deviceMotionSensor(i);
-          if (strcmp(deviceData[i].type.code, "mq2") == 0) new deviceSmokeSensor(i);
-          if (strcmp(deviceData[i].type.code, "outlet") == 0) new deviceOutlet(i);
-          if (strcmp(deviceData[i].type.code, "batmodbus") == 0) new deviceBatteryService(i);
+          if (strcmp(deviceData[i].type.code, "led") == 0) classGenericLED[i] = new deviceGenericLED(i);
+          if (strcmp(deviceData[i].type.code, "rgbled") == 0) classRgbLED[i] = new deviceRgbLED(i);
+          if (strcmp(deviceData[i].type.code, "maxled") == 0) classMax7219LED[i] = new deviceMax7219LED(i,a);
+          if (strcmp(deviceData[i].type.code, "button") == 0) classProgButton[i] = new deviceProgButton(i,i);
+          if (strcmp(deviceData[i].type.code, "doorbell") == 0) classDoorBell[i] = new deviceDoorBell(i,i);
+          if (strcmp(deviceData[i].type.code, "contact") == 0) classContactSensor[i] = new deviceContactSensor(i);
+          if (strcmp(deviceData[i].type.code, "leak") == 0) classLeakSensor[i] = new deviceLeakSensor(i);
+          if (strcmp(deviceData[i].type.code, "security") == 0) classSecuritySystem[i] = new deviceSecuritySystem(i);
+          if (strcmp(deviceData[i].type.code, "terxon") == 0) classSecuritySystem[i] = new deviceSecuritySystem(i);
+          if (strcmp(deviceData[i].type.code, "garage") == 0) classGarageDoorOpener[i] = new deviceGarageDoorOpener(i);
+          if (strcmp(deviceData[i].type.code, "ds18b20") == 0) classTemperatureSensor[i] = new deviceTemperatureSensor(i);
+          if (strcmp(deviceData[i].type.code, "dht11") == 0) classTemperatureSensor[i] = new deviceTemperatureSensor(i);
+          if (strcmp(deviceData[i].type.code, "dht22") == 0) classTemperatureSensor[i] = new deviceTemperatureSensor(i);
+          if (strcmp(deviceData[i].type.code, "bh1750") == 0) classLightSensor[i] = new deviceLightSensor(i);
+          if (strcmp(deviceData[i].type.code, "temt6000") == 0) classLightSensor[i] = new deviceLightSensor(i);
+          if (strcmp(deviceData[i].type.code, "sw420") == 0) classMotionSensor[i] = new deviceMotionSensor(i);
+          if (strcmp(deviceData[i].type.code, "hcsr501") == 0) classMotionSensor[i] = new deviceMotionSensor(i);
+          if (strcmp(deviceData[i].type.code, "mq2") == 0) classSmokeSensor[i] = new deviceSmokeSensor(i);
+          if (strcmp(deviceData[i].type.code, "outlet") == 0) classOutlet[i] = new deviceOutlet(i);
+          if (strcmp(deviceData[i].type.code, "batmodbus") == 0) classBatteryService[i] = new deviceBatteryService(i);
         }
         // Set device restart required false
         deviceData[i].restartrequired = false;
@@ -178,26 +194,26 @@ void setup() {
         new Characteristic::Version("1.1.0");
       // Set Service within Accessory within Category
       for (int a = 0; a < deviceData[0].type.accessory_count; a++) { // Multi Services in one Accessory
-        if (strcmp(deviceData[0].type.code, "contact") == 0) new deviceContactSensor(0);
-        else if (strcmp(deviceData[0].type.code, "leak") == 0) new deviceLeakSensor(0);
-        else if (strcmp(deviceData[0].type.code, "button") == 0) new deviceProgButton(0,0);
-        else if (strcmp(deviceData[0].type.code, "doorbell") == 0) new deviceDoorBell(0,0);
-        else if (strcmp(deviceData[0].type.code, "security") == 0) new deviceSecuritySystem(0);
-        else if (strcmp(deviceData[0].type.code, "terxon") == 0) new deviceSecuritySystem(0);
-        else if (strcmp(deviceData[0].type.code, "led") == 0) new deviceGenericLED(0);
-        else if (strcmp(deviceData[0].type.code, "rgbled") == 0) new deviceRgbLED(0);
-        else if (strcmp(deviceData[0].type.code, "maxled") == 0) new deviceMax7219LED(0,a);
-        else if (strcmp(deviceData[0].type.code, "garage") == 0) new deviceGarageDoorOpener(0);
-        else if (strcmp(deviceData[0].type.code, "ds18b20") == 0) new deviceTemperatureSensor(0);
-        else if (strcmp(deviceData[0].type.code, "dht11") == 0) new deviceTemperatureSensor(0);
-        else if (strcmp(deviceData[0].type.code, "dht22") == 0) new deviceTemperatureSensor(0);
-        else if (strcmp(deviceData[0].type.code, "bh1750") == 0) new deviceLightSensor(0);
-        else if (strcmp(deviceData[0].type.code, "temt6000") == 0) new deviceLightSensor(0);
-        else if (strcmp(deviceData[0].type.code, "sw420") == 0) new deviceMotionSensor(0);
-        else if (strcmp(deviceData[0].type.code, "hcsr501") == 0) new deviceMotionSensor(0);
-        else if (strcmp(deviceData[0].type.code, "mq2") == 0) new deviceSmokeSensor(0);
-        else if (strcmp(deviceData[0].type.code, "outlet") == 0) new deviceOutlet(0);
-        else if (strcmp(deviceData[0].type.code, "batmodbus") == 0) new deviceBatteryService(0);
+        if (strcmp(deviceData[0].type.code, "contact") == 0) classContactSensor[0] = new deviceContactSensor(0);
+        else if (strcmp(deviceData[0].type.code, "leak") == 0) classLeakSensor[0] = new deviceLeakSensor(0);
+        else if (strcmp(deviceData[0].type.code, "button") == 0) classProgButton[0] = new deviceProgButton(0,0);
+        else if (strcmp(deviceData[0].type.code, "doorbell") == 0) classDoorBell[0] = new deviceDoorBell(0,0);
+        else if (strcmp(deviceData[0].type.code, "security") == 0) classSecuritySystem[0] = new deviceSecuritySystem(0);
+        else if (strcmp(deviceData[0].type.code, "terxon") == 0) classSecuritySystem[0] = new deviceSecuritySystem(0);
+        else if (strcmp(deviceData[0].type.code, "led") == 0) classGenericLED[0] = new deviceGenericLED(0);
+        else if (strcmp(deviceData[0].type.code, "rgbled") == 0) classRgbLED[0] = new deviceRgbLED(0);
+        else if (strcmp(deviceData[0].type.code, "maxled") == 0) classMax7219LED[0] = new deviceMax7219LED(0,a);
+        else if (strcmp(deviceData[0].type.code, "garage") == 0) classGarageDoorOpener[0] = new deviceGarageDoorOpener(0);
+        else if (strcmp(deviceData[0].type.code, "ds18b20") == 0) classTemperatureSensor[0] = new deviceTemperatureSensor(0);
+        else if (strcmp(deviceData[0].type.code, "dht11") == 0) classTemperatureSensor[0] = new deviceTemperatureSensor(0);
+        else if (strcmp(deviceData[0].type.code, "dht22") == 0) classTemperatureSensor[0] = new deviceTemperatureSensor(0);
+        else if (strcmp(deviceData[0].type.code, "bh1750") == 0) classLightSensor[0] = new deviceLightSensor(0);
+        else if (strcmp(deviceData[0].type.code, "temt6000") == 0) classLightSensor[0] = new deviceLightSensor(0);
+        else if (strcmp(deviceData[0].type.code, "sw420") == 0) classMotionSensor[0] = new deviceMotionSensor(0);
+        else if (strcmp(deviceData[0].type.code, "hcsr501") == 0) classMotionSensor[0] = new deviceMotionSensor(0);
+        else if (strcmp(deviceData[0].type.code, "mq2") == 0) classSmokeSensor[0] = new deviceSmokeSensor(0);
+        else if (strcmp(deviceData[0].type.code, "outlet") == 0) classOutlet[0] = new deviceOutlet(0);
+        else if (strcmp(deviceData[0].type.code, "batmodbus") == 0) classBatteryService[0] = new deviceBatteryService(0);
       }
     } else {
       homeSpan.begin(Category::Sensors, controllerData.homekit_name,controllerData.homekit_hostnamebase,controllerData.homekit_modelname);  // Even if no accessory is configured we need to begin homespan otherwise the application will stop
@@ -349,15 +365,15 @@ void setupWeb() {
     for (int i = 0; i < aDEVICES; i++) {
       if (i > 0) JSON += ",";
       JSON += "{\"id\":" + String(i + 1) + ", \"active\":" + String(deviceData[i].active) + ", \"restartrequired\":" + String(deviceData[i].restartrequired) + ", \"homekit_id\":\"" + String(deviceData[i].homekitid) + "\",";
-      JSON += " \"type\":{\"name\":\"" + String(deviceData[i].type.name) + "\", \"code\":\"" + String(deviceData[i].type.code) + "\", \"pintype\":\"" + String(deviceData[i].type.pintype) + "\", \"picture_id\":" + String(deviceData[i].type.picture_id) + "},";
+      JSON += " \"type\":{\"name\":\"" + String(deviceData[i].type.name) + "\", \"code\":\"" + String(deviceData[i].type.code) + "\", \"switchable\":" + String(deviceData[i].type.switchable) + ", \"pintype\":\"" + String(deviceData[i].type.pintype) + "\", \"picture_id\":" + String(deviceData[i].type.picture_id) + "},";
       JSON += " \"name\":\"" + String(deviceData[i].name) + "\",";
       JSON += " \"text_1\":\"" + String(deviceData[i].text_1) + "\",\"text_2\":\"" + String(deviceData[i].text_2) + "\",\"text_3\":\"" + String(deviceData[i].text_3) + "\",";
       JSON += " \"pin_1\":" + String(deviceData[i].pin_1) + ", \"pin_2\":" + String(deviceData[i].pin_2) + ", \"pin_3\":" + String(deviceData[i].pin_3) + ", \"pin_4\":" + String(deviceData[i].pin_4) + ",";
       JSON += " \"pin_1_reverse\":" + String(deviceData[i].pin_1_reverse) + ", \"pin_2_reverse\":" + String(deviceData[i].pin_2_reverse) + ", \"pin_3_reverse\":" + String(deviceData[i].pin_3_reverse) + ", \"pin_4_reverse\":" + String(deviceData[i].pin_4_reverse) + ",";
       JSON += " \"bool_1\":" + String(deviceData[i].bool_1) + ",";
       JSON += " \"float_1\":" + String(deviceData[i].float_1) + ", \"float_2\":" + String(deviceData[i].float_2) + ",";
-      JSON += " \"state_1\":{\"value\":\"" + String(deviceData[i].state_1_value) + "\", \"unit\":\"" + String(deviceData[i].state_1_unit) + "\"},";
-      JSON += " \"state_2\":{\"value\":\"" + String(deviceData[i].state_2_value) + "\", \"unit\":\"" + String(deviceData[i].state_2_unit) + "\"},";
+      JSON += " \"state_1\":{\"value\":\"" + String(deviceData[i].state_1_value) + "\", \"unit\":\"" + String(deviceData[i].state_1_unit) + "\", \"type\":\"" + String(deviceStateKindStr[deviceData[i].state_1_type]) + "\"},";
+      JSON += " \"state_2\":{\"value\":\"" + String(deviceData[i].state_2_value) + "\", \"unit\":\"" + String(deviceData[i].state_2_unit) + "\", \"type\":\"" + String(deviceStateKindStr[deviceData[i].state_2_type]) + "\"},";
       JSON += " \"state\":\"waiting...\", \"marked\":" + String(deviceData[i].state_marked) + ", \"error_last\":\"" + String(deviceData[i].error_last) + "\"}";
     }
     JSON += "],";
@@ -438,12 +454,93 @@ void setupWeb() {
     JSON += "\"log\":[";
     for (int i = 0; i < aLogging; i++) {
       if (i > 0) JSON += ",";
-      JSON += "{\"position\":" + String(i) + ",\"runtime_sec\":" + String(actionLogging[i].runtime_sec) + ", \"devicename\":\"" + String(actionLogging[i].name) + "\", \"action\":\"" + String(logKindStr[actionLogging[i].kind]) + " " + String(actionLogging[i].value) + "" + String(actionLogging[i].unit) + "\"}";
+      JSON += "{\"position\":" + String(i) + ",\"runtime_sec\":" + String(actionLogging[i].runtime_sec) + ", \"devicename\":\"" + String(actionLogging[i].name) + "\", \"action\":\"" + String(deviceStateKindStr[actionLogging[i].kind]) + " " + String(actionLogging[i].value) + "" + String(actionLogging[i].unit) + "\"}";
     }
     JSON += "]";
     JSON += "}";
 
     webServer.send(200, "text/json", JSON);
+  });
+
+  // Rest Action ----------------------------------
+  webServer.on("/action", []() {
+    uint8_t device_id = 0;
+    bool success = true;
+    String content = "";  
+
+    // Get device id
+    if (webServer.hasArg("device_id")) {
+      device_id = webServer.arg("device_id").toInt();
+    } else {
+      success = false;
+      content = "no device_id found # ";  
+    }
+    // is device active?
+    for (int i = 0; i < aDEVICES; i++) {
+      if (deviceData[i].active == true && i == device_id - 1) {
+        content += "device found: " + String(deviceData[i].name) + " # ";
+        break;
+      }
+    }
+    // action device
+    if (success) {
+      if (webServer.hasArg("action")) {
+        if (webServer.arg("action")=="switch") {
+          content += "try to switch device # ";
+          // Check if device is switchable
+          if (deviceData[device_id - 1].type.switchable == true) {
+
+            // Try to switch device
+            if (strcmp(deviceData[device_id - 1].type.code, "outlet") == 0) { // Outlet
+              if (classOutlet[device_id - 1]) {
+                if (classOutlet[device_id - 1]->poweron) classOutlet[device_id - 1]->power->setVal(0);
+                else classOutlet[device_id - 1]->power->setVal(1);
+                classOutlet[device_id - 1]->update();
+                content += "switched";
+              } 
+              else content += "cannot access device # ";
+            }
+
+            else if (strcmp(deviceData[device_id - 1].type.code, "led") == 0) { // LED
+              if (classGenericLED[device_id - 1]) {
+                if (classGenericLED[device_id - 1]->poweron) classGenericLED[device_id - 1]->power->setVal(0);
+                else classGenericLED[device_id - 1]->power->setVal(1);
+                classGenericLED[device_id - 1]->update();
+                content += "switched";
+              } 
+              else content += "cannot access device # ";
+            }
+
+            else if (strcmp(deviceData[device_id - 1].type.code, "rgbled") == 0) { // RGB LED
+              if (classRgbLED[device_id - 1]) {
+                if (classRgbLED[device_id - 1]->poweron) classRgbLED[device_id - 1]->power->setVal(0);
+                else classRgbLED[device_id - 1]->power->setVal(1);
+                classRgbLED[device_id - 1]->update();
+                content += "switched";
+              } 
+              else content += "cannot access device # ";
+            } 
+            
+            else {
+              content += "not valid for this device";
+              success = false;
+            }
+
+          } else {
+            content += "device not switchable";
+            success = false;
+          }
+        } else {
+          content += "no valid action";
+          success = false;
+        }
+      } else {
+        content += "no action found";
+        success = false;
+      }
+    }
+
+    webServer.send(200, "text/json", "{\"success\":" + String(success) + ",\"message\":\"" + content + "\"}");
   });
 
   // Save ----------------------------------
@@ -744,7 +841,7 @@ void setupWeb() {
 // HELPER Controller
 void statusUpdate(HS_STATUS status) {
   status_global = homeSpan.statusString(status);
-  logEntry(controllerData.homekit_name, logKind::STATE, String(status_global));
+  logEntry(controllerData.homekit_name, deviceStateKind::STATE, String(status_global));
 }
 void unpairController() {
   homeSpan.processSerialCommand("U");  // unpair device by deleting all Controller data
@@ -802,8 +899,10 @@ void resetDevice(int position) {
   deviceData[position].float_2 = 0.0;
   strcpy(deviceData[position].state_1_value, ""); 
   strcpy(deviceData[position].state_1_unit, ""); 
+  deviceData[position].state_1_type = deviceStateKind::NONE;
   strcpy(deviceData[position].state_2_value, ""); 
   strcpy(deviceData[position].state_2_unit, ""); 
+  deviceData[position].state_2_type = deviceStateKind::NONE;
   deviceData[position].state_marked = false;
   deviceData[position].error_last = "";
   deviceData[position].restartrequired = false;
@@ -921,7 +1020,7 @@ void processMQTT() {
               status_mqtt_connected = true;
             } else {
               LOG1("MQTT connect failed: " + String(mqtt_client.state()) + " \n");
-              logEntry(controllerData.homekit_name, logKind::ERROR, "MQTT connect failed: " + String(mqtt_client.state()));
+              logEntry(controllerData.homekit_name, deviceStateKind::ERROR, "MQTT connect failed: " + String(mqtt_client.state()));
               status_last_mqtt = "connect failed: " + String(mqtt_client.state());
               status_mqtt_connected = false;
               controllerData.mqtt_active = false; // Abort MQTT, set to inactive
@@ -942,7 +1041,7 @@ void processMQTT() {
           strcat(devicename, "/");
           strcat(devicename, actionLogging[i].name);
           strcat(devicename, "/");
-          strcat(devicename, logKindStr[actionLogging[i].kind]);
+          strcat(devicename, deviceStateKindStr[actionLogging[i].kind]);
           // Send value
           mqtt_client.publish(removeSpaces(devicename), String(actionLogging[i].value).c_str());
           // Send unit, if not empty

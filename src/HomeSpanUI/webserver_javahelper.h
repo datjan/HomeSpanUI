@@ -114,6 +114,21 @@ function saveMqtt() {
         showWaitingPeriodAndReloadSite(12);
     }
 }
+// Action
+function runAction(device_id, action) {
+    if(xmlHttpAction.readyState==0 || xmlHttpAction.readyState==4){
+        var params = "device_id=" + device_id + "&action=" + action;
+        xmlHttpAction.open('POST','action'+methodending,true);
+        xmlHttpAction.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+        xmlHttpAction.onreadystatechange=function() { 
+            if(xmlHttpAction.readyState==4 && xmlHttpAction.status==200){
+                checkJsonShowError(xmlHttpAction.response);
+                actState();
+            }
+        }
+        xmlHttpAction.send(params);
+    }
+}
 // Controller
 function saveController() {
     if(xmlHttpControllerSave.readyState==0 || xmlHttpControllerSave.readyState==4){

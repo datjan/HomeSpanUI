@@ -85,6 +85,11 @@ Lights
 * 8x8 Matrix - MAX7219 (up to three different combinations)
 ```
 
+Relais
+```
+* Outlet
+```
+
 Sensors
 ```
 * Contact
@@ -121,6 +126,9 @@ The devices can be added and configured in an easy way. The web interface shows 
 ### Device status
 The web interface is fully dynamic and shows you the state of each device in nearly the same way the HomeKit app does.
 
+### Device steering
+The web interface is able to switch devices even without the Apple Home App.
+
 ### Action log
 HomeSpanUI logs the last 20 activities on the controller. Every action can be send via MQTT.
 
@@ -130,13 +138,10 @@ For advanced information read [MQTT Log documentation](docs/MqttLog.md)
 This project is just beginning, so there are still a few to-dos
 ```
 * not every device has its icon
-* maybe some refreshing problems may appear on the web interface
 * some parts of the code could be more lightweight to save flash
-* first response of web interface is to slow
 ```
 Actual development on this project:
 ```
-* Outlet device
 * Garage door device
 * Leak device
 * Device sources from MODBUS, MQTT and REST APIs
